@@ -1,0 +1,3 @@
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
+export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting

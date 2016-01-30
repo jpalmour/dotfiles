@@ -1,0 +1,5 @@
+export NVM_DIR=~/.nvm
+export EDITOR=vim
+
+# prevent window names from not showing properly in tmuxinator
+export DISABLE_AUTO_TITLE=true
