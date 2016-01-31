@@ -2,7 +2,8 @@
 
 cd "$(dirname "$0")"
 
-git pull origin master;
+git pull origin master
+git submodule update
 
 function doIt() {
 	rsync --exclude ".git/" --exclude ".DS_Store" --exclude "bootstrap.sh" \
