@@ -11,3 +11,10 @@ autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
 " open NERTDTree with <C-n>
 map <C-n> :NERDTreeToggle<CR>
+
+" use solarized dark colorscheme
+syntax enable
+set background=dark
+colorscheme solarized
+
+set number

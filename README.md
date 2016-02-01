@@ -1,7 +1,7 @@
 # Joseph's dotfiles
 
 ### Installation
-Clone repo somewhere (other than ~), `cd` into repository and then:
+Clone repo somewhere other than ~, `cd` into repository, and then:
 ```bash
 source bootstrap.sh
 ```
@@ -12,7 +12,7 @@ source bootstrap.sh
 ```
 
 ### Install Homebrew formulae
-(http://brew.sh/) formulae (after installing Homebrew, of course):
+Install [Homebrew](http://brew.sh/), and then:
 ```bash
 ./brew.sh
 ```
