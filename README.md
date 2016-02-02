@@ -12,7 +12,7 @@ source bootstrap.sh
 ```
 
 ### Install Homebrew formulae
-Install [Homebrew](http://brew.sh/), and then:
+Install [Homebrew](http://brew.sh/) and then:
 ```bash
 ./brew.sh
 ```

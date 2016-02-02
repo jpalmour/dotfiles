@@ -17,4 +17,8 @@ syntax enable
 set background=dark
 colorscheme solarized
 
+" force myself to not use ESC
+inoremap <ESC> <NOP>
+
+" show line numbers
 set number
