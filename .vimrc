@@ -2,6 +2,8 @@
 runtime bundle/vim-pathogen/autoload/pathogen.vim
 execute pathogen#infect()
 
+let mapleader=","
+
 " leave insert mode while keeping your hands on home row
 inoremap jk <ESC>
 

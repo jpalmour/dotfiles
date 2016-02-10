@@ -52,7 +52,6 @@ brew cask install google-chrome
 brew cask install hipchat
 brew cask install iterm2
 brew cask install sequel-pro
-brew cask install vagrant
 brew cask install virtualbox
 brew cask install vlc
 
