@@ -49,3 +49,6 @@
 [submodule ".vim/bundle/vim-airline"]
 	path = .vim/bundle/vim-airline
 	url = https://github.com/vim-airline/vim-airline
+[submodule "work/tr-testing-and-deployment-scripts"]
+	path = work/tr-testing-and-deployment-scripts
+	url = git@github.com:cbdr/tr-testing-and-deployment-scripts.git
