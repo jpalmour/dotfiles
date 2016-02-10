@@ -25,15 +25,32 @@ inoremap <ESC> <NOP>
 " show line numbers
 set number
 
+" highlight problematic white space
+set list
+set listchars=tab:›\ ,trail:•,extends:#,nbsp:.
+
 " vim-go mappings
 au FileType go nmap <leader>r <Plug>(go-run)
 au FileType go nmap <leader>b <Plug>(go-build)
 au FileType go nmap <leader>t <Plug>(go-test)
 au FileType go nmap <leader>c <Plug>(go-coverage)
-au FileType go nmap <Leader>ds <Plug>(go-def-split)
-au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
-au FileType go nmap <Leader>dt <Plug>(go-def-tab)
-au FileType go nmap <Leader>gd <Plug>(go-doc)
-au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
-au FileType go nmap <Leader>gb <Plug>(go-doc-browser)
+au FileType go nmap <Leader>es <Plug>(go-def-split)
+au FileType go nmap <Leader>ev <Plug>(go-def-vertical)
+au FileType go nmap <Leader>et <Plug>(go-def-tab)
+au FileType go nmap <Leader>od <Plug>(go-doc)
+au FileType go nmap <Leader>ov <Plug>(go-doc-vertical)
+au FileType go nmap <Leader>ob <Plug>(go-doc-browser)
 au FileType go nmap <Leader>s <Plug>(go-implements)
+
+" fugitive mappings
+nnoremap <silent> <leader>gs :Gstatus<CR>
+nnoremap <silent> <leader>gd :Gdiff<CR>
+nnoremap <silent> <leader>gc :Gcommit<CR>
+nnoremap <silent> <leader>gb :Gblame<CR>
+nnoremap <silent> <leader>gl :Glog<CR>
+nnoremap <silent> <leader>gp :Git push<CR>
+nnoremap <silent> <leader>gr :Gread<CR>
+nnoremap <silent> <leader>gw :Gwrite<CR>
+nnoremap <silent> <leader>ge :Gedit<CR>
+nnoremap <silent> <leader>gi :Git add -p %<CR>
+nnoremap <silent> <leader>gg :SignifyToggle<CR>
