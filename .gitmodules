@@ -52,3 +52,9 @@
 [submodule "work/tr-testing-and-deployment-scripts"]
 	path = work/tr-testing-and-deployment-scripts
 	url = git@github.com:cbdr/tr-testing-and-deployment-scripts.git
+[submodule ".vim/bundle/vim-markdown-preview"]
+	path = .vim/bundle/vim-markdown-preview
+	url = git@github.com:JamshedVesuna/vim-markdown-preview.git
+[submodule ".vim/bundle/vim-tmux-navigator"]
+	path = .vim/bundle/vim-tmux-navigator
+	url = git@github.com:christoomey/vim-tmux-navigator.git

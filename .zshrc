@@ -17,3 +17,5 @@ source ~/work/.work
 
 source $ZSH/oh-my-zsh.sh
 source $(brew --prefix nvm)/nvm.sh
+
+export PATH="/usr/local/sbin:$PATH"
