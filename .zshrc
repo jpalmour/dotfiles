@@ -7,12 +7,13 @@ ZSH_THEME="robbyrussell"
 plugins=(git)
 
 # source dotfiles
-for file in ~/.{path,exports,aliases,functions}; do
+for file in ~/.{path,exports,aliases}; do
 	[ -r "$file" ] && [ -f "$file" ] && source "$file";
 done;
 unset file;
 
-# source work stuff
+source ~/functions/*.sh
+
 source ~/work/.work
 
 source $ZSH/oh-my-zsh.sh
