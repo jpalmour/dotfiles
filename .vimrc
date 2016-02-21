@@ -11,6 +11,9 @@ inoremap jk <ESC>
 autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
 
+" Find git merge conflict markers
+map <leader>fc /\v^[<\|=>]{7}( .*\|$)<CR>
+
 " open NERTDTree with <C-n>
 map <C-n> :NERDTreeToggle<CR>
 
@@ -18,6 +21,11 @@ map <C-n> :NERDTreeToggle<CR>
 syntax enable
 set background=dark
 colorscheme solarized
+
+" highlight search results
+set hlsearch
+" unsets the last search pattern register by hitting return
+nnoremap <CR> :noh<CR><CR>
 
 " force myself to not use ESC
 inoremap <ESC> <NOP>

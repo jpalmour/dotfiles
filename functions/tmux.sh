@@ -15,3 +15,11 @@ nt () {
   tmux send-keys -t "notes/todo" ":vsplit $NOTES_DIR" 'C-m'
   tmux select-window -t "notes/todo"
 }
+
+rp () {
+  tmux new-window -n "$1"
+  tmux send-keys -t "$1" "vim $REPO_DIR/$1" 'C-m'
+  tmux split-window -t "$2" -p 15
+  tmux send-keys -t "$1" "cd $REPO_DIR/$1" 'C-m'
+  tmux select-window -t "$1"
+}
