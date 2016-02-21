@@ -17,9 +17,10 @@ nt () {
 }
 
 rp () {
-  tmux new-window -n "$1"
-  tmux send-keys -t "$1" "vim $REPO_DIR/$1" 'C-m'
-  tmux split-window -t "$2" -p 15
-  tmux send-keys -t "$1" "cd $REPO_DIR/$1" 'C-m'
-  tmux select-window -t "$1"
+  window_name=${1/./}
+  tmux new-window -n "$window_name"
+  tmux send-keys -t "$window_name" "vim $REPO_DIR/$1" 'C-m'
+  tmux split-window -t "$window_name" -p 15
+  tmux send-keys -t "$window_name" "cd $REPO_DIR/$1" 'C-m'
+  tmux select-window -t "$window_name"
 }
