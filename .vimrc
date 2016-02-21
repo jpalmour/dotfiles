@@ -58,3 +58,9 @@ nnoremap <silent> <leader>gg :SignifyToggle<CR>
 " vim markdown preview mappings
 let vim_markdown_preview_hotkey='<C-m>'
 let vim_markdown_preview_browser='Google Chrome'
+
+" display all buffers when only one tab is open
+let g:airline#extensions#tabline#enabled = 1
+
+" make sure airline-tmux extension is disbaled to not overwrite tmux theme
+let g:airline#extensions#tmuxline#enabled = 0

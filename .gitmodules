@@ -58,3 +58,12 @@
 [submodule "work"]
 	path = work
 	url = git@github.com:jpalmour/dotfiles-work.git
+[submodule ".vim/bundle/tmuxline.vim"]
+	path = .vim/bundle/tmuxline.vim
+	url = git@github.com:edkolev/tmuxline.vim.git
+[submodule "fonts"]
+	path = fonts
+	url = git@github.com:powerline/fonts.git
+[submodule ".vim/bundle/promptline.vim"]
+	path = .vim/bundle/promptline.vim
+	url = git@github.com:edkolev/promptline.vim.git

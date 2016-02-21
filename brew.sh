@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# install powerline fonts
+~/fonts/install.sh
+
 # Install command-line tools using Homebrew.
 
 # Ask for the administrator password upfront.

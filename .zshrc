@@ -1,7 +1,8 @@
 # Path to your oh-my-zsh installation.
 export ZSH=~/.oh-my-zsh
 
-ZSH_THEME="robbyrussell"
+# add airline theme to shell prompt, created by https://github.com/edkolev/promptline.vim
+source ~/shell-prompt-airline-theme.sh
 
 # zsh plugins
 plugins=(git)
