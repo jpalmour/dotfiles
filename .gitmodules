@@ -67,3 +67,6 @@
 [submodule ".vim/bundle/promptline.vim"]
 	path = .vim/bundle/promptline.vim
 	url = git@github.com:edkolev/promptline.vim.git
+[submodule ".vim/bundle/vim-rsi"]
+	path = .vim/bundle/vim-rsi
+	url = git@github.com:tpope/vim-rsi.git
