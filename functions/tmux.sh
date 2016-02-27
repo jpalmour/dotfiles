@@ -1,6 +1,7 @@
 #!/bin/bash
 
-export NOTES_DIR=~/Developer/td-notes
+export REPO_DIR=~/Developer/repos
+export NOTES_DIR=~/Developer/notes
 export TODO_DIR=~/Developer/todo
 
 nt () {

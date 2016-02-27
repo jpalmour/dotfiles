@@ -1,5 +1,17 @@
-# Path to your oh-my-zsh installation.
-export ZSH=~/.oh-my-zsh
+# build path
+source ~/.path
+
+# export environment variables
+source ~/.exports
+
+# aliases
+source ~/.aliases
+
+# functions
+source ~/functions/*.sh
+
+# work-specific aliases and functions
+source ~/work/.work
 
 # add airline theme to shell prompt, created by https://github.com/edkolev/promptline.vim
 source ~/shell-prompt-airline-theme.sh
@@ -7,17 +19,14 @@ source ~/shell-prompt-airline-theme.sh
 # zsh plugins
 plugins=(git)
 
-# source dotfiles
-for file in ~/.{path,exports,aliases}; do
-	[ -r "$file" ] && [ -f "$file" ] && source "$file";
-done;
-unset file;
-
-source ~/functions/*.sh
-
-source ~/work/.work
-
+# oh my zsh
 source $ZSH/oh-my-zsh.sh
+
+# nvm for node version management
 source $(brew --prefix nvm)/nvm.sh
 
-export PATH="/usr/local/sbin:$PATH"
+# use chruby for ruby version management
+source /usr/local/opt/chruby/share/chruby/chruby.sh
+
+# enable auto-switching of rubies specified by  .ruby-version files
+source /usr/local/opt/chruby/share/chruby/auto.sh
