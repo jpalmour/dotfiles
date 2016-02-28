@@ -5,3 +5,6 @@ export DEV_DIR=~/Developer
 
 # prevent window names from not showing properly in tmuxinator
 export DISABLE_AUTO_TITLE=true
+
+# autostart a tmux session on logging in
+export ZSH_TMUX_AUTOSTART=true

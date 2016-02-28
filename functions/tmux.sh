@@ -4,6 +4,9 @@ export REPO_DIR=~/Developer/repos
 export NOTES_DIR=~/Developer/notes
 export TODO_DIR=~/Developer/todo
 
+# open notes and todo in vim in 2 vertical splits
+# create today's todo from previous day if today's todo doesn't exist
+# -n does this in new tmux window
 nt () {
   local OPTIND
   local opt
@@ -28,6 +31,8 @@ nt () {
   fi
 }
 
+# take repo name as arg and prepare repo workspace
+# -n does this in new tmux window
 rp () {
   local OPTIND
   local opt
@@ -48,4 +53,16 @@ rp () {
     tmux split-window -p 15
     tmux send-keys -t "$window_name.2" "cd $REPO_DIR/$1" 'C-m'
   fi
+}
+
+# take docker-compose service as arg and log
+# -n does this in new tmux window
+dcl () {
+  local window_name="$1"-logs
+  tmux new-window -n "$window_name"
+  tmux send-keys -t "$window_name" "docker-env" 'C-m'
+  local dir=$(pwd)
+  tmux send-keys -t "$window_name" "cd $dir" 'C-m'
+  tmux send-keys -t "$window_name" "docker-compose logs $1" 'C-m'
+  tmux select-window -t "$window_name"
 }

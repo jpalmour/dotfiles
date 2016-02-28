@@ -17,7 +17,7 @@ source ~/work/.work
 source ~/shell-prompt-airline-theme.sh
 
 # zsh plugins
-plugins=(git)
+plugins=(git, docker, brew, npm, tmux)
 
 # oh my zsh
 source $ZSH/oh-my-zsh.sh

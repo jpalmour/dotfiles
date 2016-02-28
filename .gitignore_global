@@ -36,3 +36,9 @@ Compiled source #
 ehthumbs.db
 Thumbs.db
 .idea
+
+# vim temp and swap files #
+###########################
+*.swp
+*.swo
+*.~
