@@ -72,3 +72,6 @@ let g:airline#extensions#tabline#enabled = 1
 
 " make sure airline-tmux extension is disbaled to not overwrite tmux theme
 let g:airline#extensions#tmuxline#enabled = 0
+
+" change local current dir to that of file in current window
+autocmd BufEnter * silent! lcd %:p:h

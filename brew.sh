@@ -41,6 +41,8 @@ brew install wget
 
 # go
 brew install go
+go get golang.org/x/tools/cmd/godoc
+go get golang.org/x/tools/cmd/vet
 
 # php
 brew install composer
