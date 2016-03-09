@@ -22,6 +22,15 @@ syntax enable
 set background=dark
 colorscheme solarized
 
+" show matching parentheses/brackets
+set showmatch
+
+" Minimum lines to keep above and below the cursor
+set scrolloff=3
+
+" Backspace and cursor keys wrap too
+set whichwrap=b,s,h,l,<,>,[,]
+
 " highlight search results
 set hlsearch
 " unsets the last search pattern register by hitting return
@@ -36,6 +45,18 @@ set number
 " highlight problematic white space
 set list
 set listchars=tab:›\ ,trail:•,extends:#,nbsp:.
+
+" backspace
+set backspace=indent,eol,start
+
+" pastetoggle (sane indentation on pastes)
+set pastetoggle=<F12>
+
+" Puts new vsplit windows to the right of the current
+set splitright
+
+" Puts new split windows to the bottom of the current
+set splitbelow
 
 " vim-go mappings
 au FileType go nmap <leader>r <Plug>(go-run)
@@ -67,11 +88,26 @@ nnoremap <silent> <leader>gg :SignifyToggle<CR>
 let vim_markdown_preview_hotkey='<C-m>'
 let vim_markdown_preview_browser='Google Chrome'
 
-" display all buffers when only one tab is open
-let g:airline#extensions#tabline#enabled = 1
-
 " make sure airline-tmux extension is disbaled to not overwrite tmux theme
 let g:airline#extensions#tmuxline#enabled = 0
 
 " change local current dir to that of file in current window
 autocmd BufEnter * silent! lcd %:p:h
+
+" vim-indent-guides settings
+let g:indent_guides_start_level = 2
+let g:indent_guides_guide_size = 1
+let g:indent_guides_enable_on_vim_startup = 1
+let g:indent_guides_auto_colors = 0
+if 'dark' == &background
+  autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
+  autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=236
+else
+  autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
+  autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=0
+endif
+
+" 'zoom' by breaking current window to new tab
+nnoremap <leader>t :split<CR><C-w>T
+
+autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
