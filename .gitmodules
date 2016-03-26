@@ -73,3 +73,9 @@
 [submodule ".vim/bundle/vim-indent-guides"]
 	path = .vim/bundle/vim-indent-guides
 	url = git://github.com/nathanaelkane/vim-indent-guides.git
+[submodule ".vim/bundle/vim-eunuch"]
+	path = .vim/bundle/vim-eunuch
+	url = git@github.com:tpope/vim-eunuch.git
+[submodule ".vim/bundle/vim-cwdtabline"]
+	path = .vim/bundle/vim-cwdtabline
+	url = git@github.com:lag13/vim-cwdtabline.git

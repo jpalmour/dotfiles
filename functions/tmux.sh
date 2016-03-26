@@ -10,12 +10,9 @@ export TODO_DIR=~/Developer/todo
 nt () {
   local OPTIND
   local opt
+  createTodo
   date_format=+%-m-%-d-%y
   todo_today=$(date $date_format).md
-  if [ ! -e $TODO_DIR/$todo_today ]; then
-    todo_yesterday=$(date -d'yesterday' $date_format).md
-    cp $TODO_DIR/$todo_yesterday $TODO_DIR/$todo_today
-  fi
   getopts "n" opt
   if [ ! -z $opt ] && [ $opt = "n" ]; then
     tmux new-window -n "notes/todo"
@@ -29,6 +26,28 @@ nt () {
     tmux send-keys "vim $TODO_DIR/$todo_today" 'C-m'
     tmux send-keys ":vsplit $NOTES_DIR" 'C-m'
   fi
+}
+
+createTodo () {
+  date_format=+%-m-%-d-%y
+  todo_today=$(todoFileName)
+  if [ ! -e $TODO_DIR/$todo_today ]; then
+    num="1"
+    todo_prev=$(gdate -d"-$num day" $date_format).md
+    echo $todo_prev
+    while [ ! -e $TODO_DIR/$todo_prev ]
+    do
+      num=$[$num+1]
+      todo_prev=$(gdate -d"-$num day" $date_format).md
+      echo $todo_prev
+    done
+    cp $TODO_DIR/$todo_prev $TODO_DIR/$todo_today
+  fi
+}
+
+todoFileName () {
+  date_format=+%-m-%-d-%y
+  echo -n $(date $date_format).md
 }
 
 # take repo name as arg and prepare repo workspace
