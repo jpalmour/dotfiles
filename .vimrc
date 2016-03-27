@@ -105,6 +105,12 @@ nnoremap <leader>z :split<CR><C-w>T
 " close vim if NERDTree is only window left open
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
+" move a line down
+map - ddp
+
+" move a line up
+map _ ddkP
+
 " tab navigation
 nnoremap <C-p> :tabprevious<CR>
 nnoremap <C-n> :tabnext<CR>
@@ -115,7 +121,7 @@ map <C-f> :CtrlP<CR>
 " NERDTree
 map <C-a> :NERDTreeToggle<CR>
 
-function! OpenTodo()
+function! EditTodos()
   tablast
   let lastTabCWD=getcwd()
   if lastTabCWD == $TODO_DIR
@@ -130,17 +136,13 @@ function! OpenTodo()
   endif
   silent !createTodo
   let todoFilePath=$TODO_DIR . '/' . system('todoFileName')
-  " open new tab if it doesn't exist, else close it.
   execute "tab split " . todoFilePath
   lcd $TODO_DIR
-  " make todo tab the second to last tab
-  " tabm
-  " execute 'silent! tabm ' . (tabpagenr()-2)
 endfunction
-nnoremap <leader>et :call OpenTodo()<CR>
+nnoremap <leader>et :call EditTodos()<CR>
 
-function! OpenNotes()
-  tablast
+function! EditNotes()
+tablast
   let lastTabCWD=getcwd()
   if lastTabCWD == $NOTES_DIR
     return
@@ -148,4 +150,12 @@ function! OpenNotes()
   execute "tab split " . $NOTES_DIR
   lcd $NOTES_DIR
 endfunction
-nnoremap <leader>en :call OpenNotes()<CR>
+nnoremap <leader>en :call EditNotes()<CR>
+
+command! -nargs=1 -complete=file EditRepo :call EditRepo(<f-args>)
+function! EditRepo(repoPath)
+  execute "tab split " . a:repoPath
+  execute "lcd " . a:repoPath
+  tabm 0
+endfunction
+nnoremap <leader>er :EditRepo $REPO_DIR/
