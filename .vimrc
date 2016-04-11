@@ -172,9 +172,10 @@ nnoremap <leader>eg :EditRepo $GOPATH/src/github.com/
 
 " open Notes and Todos when vim starts up if no files were specified
 autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | :call StartUpWithNoFilesSpecified() | endif
 function! StartUpWithNoFilesSpecified()
   call EditNotes()
+  call EditTodos()
   tabclose 1
 endfunction
 
