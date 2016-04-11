@@ -177,3 +177,12 @@ function! StartUpWithNoFilesSpecified()
   call EditNotes()
   tabclose 1
 endfunction
+
+" prompt for command in vimux pane
+ map <leader>rp :VimuxPromptCommand<CR>
+" run last command in vimux pane
+map <Leader>rl :VimuxRunLastCommand<CR>
+" close vimux pane
+map <Leader>rq :VimuxCloseRunner<CR>
+" zoom the tmux runner page
+ map <Leader>rz :VimuxZoomRunner<CR>
