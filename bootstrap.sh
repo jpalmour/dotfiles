@@ -10,6 +10,7 @@ function doIt() {
 		--exclude "README.md" --exclude "*.swp" -avh --no-perms . ~;
 	source ~/.zshenv;
 	source ~/.zshrc;
+	cp ./work/.ssh/config ~/.ssh/config
 }
 
 doIt

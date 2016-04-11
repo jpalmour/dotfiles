@@ -4,15 +4,16 @@ execute pathogen#infect()
 
 let mapleader=","
 
+nnoremap <leader>ev :vsplit $REPO_DIR/dotfiles/.vimrc<cr>
+
 " leave insert mode while keeping your hands on home row
 inoremap jk <ESC>
 
-" open NERDTree when vim starts up if no files were specified
-autocmd StdinReadPre * let s:std_in=1
-autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+nnoremap H 0
+nnoremap L $
 
 " Find git merge conflict markers
-map <leader>fc /\v^[<\|=>]{7}( .*\|$)<CR>
+noremap <leader>fc /\v^[<\|=>]{7}( .*\|$)<CR>
 
 " use solarized dark colorscheme
 syntax enable
@@ -41,7 +42,7 @@ set number
 
 " highlight problematic white space
 set list
-set listchars=tab:›\ ,trail:•,extends:#,nbsp:.
+set listchars=tab:\¦\ ,trail:•,extends:#,nbsp:.
 
 " backspace
 set backspace=indent,eol,start
@@ -55,17 +56,17 @@ set splitright
 set splitbelow
 
 " vim-go mappings
-au FileType go nmap <leader>Gr <Plug>(go-run)
-au FileType go nmap <leader>Gb <Plug>(go-build)
-au FileType go nmap <leader>Gt <Plug>(go-test)
-au FileType go nmap <leader>Gc <Plug>(go-coverage)
-au FileType go nmap <Leader>Ges <Plug>(go-def-split)
-au FileType go nmap <Leader>Gev <Plug>(go-def-vertical)
-au FileType go nmap <Leader>Get <Plug>(go-def-tab)
-au FileType go nmap <Leader>Gos <Plug>(go-doc)
-au FileType go nmap <Leader>Gov <Plug>(go-doc-vertical)
-au FileType go nmap <Leader>Gob <Plug>(go-doc-browser)
-au FileType go nmap <Leader>Gs <Plug>(go-implements)
+au FileType go nnoremap <leader>Gr <Plug>(go-run)
+au FileType go nnoremap <leader>Gb <Plug>(go-build)
+au FileType go nnoremap <leader>Gt <Plug>(go-test)
+au FileType go nnoremap <leader>Gc <Plug>(go-coverage)
+au FileType go nnoremap <leader>Ges <Plug>(go-def-split)
+au FileType go nnoremap <leader>Gev <Plug>(go-def-vertical)
+au FileType go nnoremap <leader>Get <Plug>(go-def-tab)
+au FileType go nnoremap <leader>Gos <Plug>(go-doc)
+au FileType go nnoremap <leader>Gov <Plug>(go-doc-vertical)
+au FileType go nnoremap <leader>Gob <Plug>(go-doc-browser)
+au FileType go nnoremap <leader>Gs <Plug>(go-implements)
 
 " fugitive mappings
 nnoremap <silent> <leader>gs :Gstatus<CR>
@@ -80,24 +81,24 @@ nnoremap <silent> <leader>ge :Gedit<CR>
 nnoremap <silent> <leader>gi :Git add -p %<CR>
 nnoremap <silent> <leader>gg :SignifyToggle<CR>
 
-" make sure airline-tmux extension is disbaled to not overwrite tmux theme
+" make sure airline-tmux extension is disabled to not overwrite tmux theme
 let g:airline#extensions#tmuxline#enabled = 0
 
 " vim-indent-guides settings
-let g:indent_guides_start_level = 2
-let g:indent_guides_guide_size = 1
-let g:indent_guides_enable_on_vim_startup = 1
-let g:indent_guides_auto_colors = 0
-if 'dark' == &background
-  autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
-  autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=236
-else
-  autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
-  autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=0
-endif
+" let g:indent_guides_start_level = 2
+" let g:indent_guides_guide_size = 1
+" let g:indent_guides_enable_on_vim_startup = 1
+" let g:indent_guides_auto_colors = 0
+" if 'dark' == &background
+"   autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
+"   autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=8
+" else
+"   autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
+"   autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=0
+" endif
 
 " source dotfiles/.vimrc
-nnoremap <leader>so :!source $REPO_DIR/dotfiles/bootstrap.sh<CR>:so $MYVIMRC<CR>
+nnoremap <leader>so :!cp $REPO_DIR/dotfiles/.vimrc $MYVIMRC<CR>:so $MYVIMRC<CR>
 
 " 'zoom' by breaking current window to new tab
 nnoremap <leader>z :split<CR><C-w>T
@@ -106,20 +107,28 @@ nnoremap <leader>z :split<CR><C-w>T
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
 " move a line down
-map - ddp
+nnoremap - ddp
 
 " move a line up
-map _ ddkP
+nnoremap _ ddkP
+
+" make word all caps
+inoremap <c-u> jkviwUi
+nnoremap <c-u> viwU
 
 " tab navigation
 nnoremap <C-p> :tabprevious<CR>
 nnoremap <C-n> :tabnext<CR>
 
 " control-p
-map <C-f> :CtrlP<CR>
+nnoremap <C-f> :CtrlP<CR>
+" enable <C-p> to be used for something else
+let g:ctrlp_map = '<Nop>'
+" index hidden files in CtrlP
+let g:ctrlp_show_hidden = 1
 
 " NERDTree
-map <C-a> :NERDTreeToggle<CR>
+nnoremap <C-a> :NERDTreeToggle<CR>
 
 function! EditTodos()
   tablast
@@ -152,10 +161,19 @@ tablast
 endfunction
 nnoremap <leader>en :call EditNotes()<CR>
 
-command! -nargs=1 -complete=file EditRepo :call EditRepo(<f-args>)
 function! EditRepo(repoPath)
   execute "tab split " . a:repoPath
   execute "lcd " . a:repoPath
   tabm 0
 endfunction
+command! -nargs=1 -complete=file EditRepo :call EditRepo(<f-args>)
 nnoremap <leader>er :EditRepo $REPO_DIR/
+nnoremap <leader>eg :EditRepo $GOPATH/src/github.com/
+
+" open Notes and Todos when vim starts up if no files were specified
+autocmd StdinReadPre * let s:std_in=1
+autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree | endif
+function! StartUpWithNoFilesSpecified()
+  call EditNotes()
+  tabclose 1
+endfunction

@@ -7,6 +7,7 @@ export DEV_DIR=~/Developer
 
 mkdir -p ~/Developer/Go
 export GOPATH=~/Developer/Go
+export GO15VENDOREXPERIMENT=1
 
 # prevent window names from not showing properly in tmuxinator
 export DISABLE_AUTO_TITLE=true
