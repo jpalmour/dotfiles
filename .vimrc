@@ -69,33 +69,22 @@ au FileType go nnoremap <leader>Gob <Plug>(go-doc-browser)
 au FileType go nnoremap <leader>Gs <Plug>(go-implements)
 
 " fugitive mappings
+" TODO: find a better way to clear shell history before running command
+nnoremap <silent> <leader>gg :Git<space>
 nnoremap <silent> <leader>gs :Gstatus<CR>
 nnoremap <silent> <leader>gd :Gdiff<CR>
 nnoremap <silent> <leader>gc :Gcommit<CR>
 nnoremap <silent> <leader>gb :Gblame<CR>
+nnoremap <silent> <leader>gB :Gbrowse<CR>
 nnoremap <silent> <leader>gl :Glog<CR>
 nnoremap <silent> <leader>gp :Git push<CR>
 nnoremap <silent> <leader>gr :Gread<CR>
 nnoremap <silent> <leader>gw :Gwrite<CR>
 nnoremap <silent> <leader>ge :Gedit<CR>
 nnoremap <silent> <leader>gi :Git add -p %<CR>
-nnoremap <silent> <leader>gg :SignifyToggle<CR>
 
 " make sure airline-tmux extension is disabled to not overwrite tmux theme
 let g:airline#extensions#tmuxline#enabled = 0
-
-" vim-indent-guides settings
-" let g:indent_guides_start_level = 2
-" let g:indent_guides_guide_size = 1
-" let g:indent_guides_enable_on_vim_startup = 1
-" let g:indent_guides_auto_colors = 0
-" if 'dark' == &background
-"   autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
-"   autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=8
-" else
-"   autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=gray ctermbg=0
-"   autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=green ctermbg=0
-" endif
 
 " source dotfiles/.vimrc
 nnoremap <leader>so :!cp $REPO_DIR/dotfiles/.vimrc $MYVIMRC<CR>:so $MYVIMRC<CR>
@@ -113,8 +102,8 @@ nnoremap - ddp
 nnoremap _ ddkP
 
 " make word all caps
-inoremap <c-u> jkviwUi
-nnoremap <c-u> viwU
+inoremap <c-u> <ESC>viwUea
+nnoremap <leader>u viwUe
 
 " tab navigation
 nnoremap <C-p> :tabprevious<CR>
@@ -143,7 +132,7 @@ function! EditTodos()
       return
     endif
   endif
-  silent !createTodo
+  silent !createTodoAndCleanPrevious
   let todoFilePath=$TODO_DIR . '/' . system('todoFileName')
   execute "tab split " . todoFilePath
   lcd $TODO_DIR
@@ -151,7 +140,7 @@ endfunction
 nnoremap <leader>et :call EditTodos()<CR>
 
 function! EditNotes()
-tablast
+  tablast
   let lastTabCWD=getcwd()
   if lastTabCWD == $NOTES_DIR
     return
@@ -170,6 +159,15 @@ command! -nargs=1 -complete=file EditRepo :call EditRepo(<f-args>)
 nnoremap <leader>er :EditRepo $REPO_DIR/
 nnoremap <leader>eg :EditRepo $GOPATH/src/github.com/
 
+function! EditScratch(scratchFile)
+  silent !mkdir -p /tmp/scratch
+  execute "tab split " . a:scratchFile
+  lcd %:p:h
+  tabm 0
+endfunction
+command! -nargs=1 -complete=file EditScratch :call EditScratch(<f-args>)
+nnoremap <leader>es :EditScratch /tmp/scratch/
+
 " open Notes and Todos when vim starts up if no files were specified
 autocmd StdinReadPre * let s:std_in=1
 autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | :call StartUpWithNoFilesSpecified() | endif
@@ -180,10 +178,10 @@ function! StartUpWithNoFilesSpecified()
 endfunction
 
 " prompt for command in vimux pane
- map <leader>rp :VimuxPromptCommand<CR>
+map <leader>rp :VimuxPromptCommand<CR>
 " run last command in vimux pane
 map <Leader>rl :VimuxRunLastCommand<CR>
 " close vimux pane
 map <Leader>rq :VimuxCloseRunner<CR>
 " zoom the tmux runner page
- map <Leader>rz :VimuxZoomRunner<CR>
+map <Leader>rz :VimuxZoomRunner<CR>
