@@ -34,6 +34,15 @@ set hlsearch
 " unsets the last search pattern register by hitting return
 nnoremap <CR> :noh<CR><CR>
 
+" ignore case when searching if search string is all lowercase
+:set ignorecase
+:set smartcase
+
+" use ag for ack.vim searches if present
+if executable('ag')
+    let g:ackprg = 'ag --vimgrep'
+endif
+
 " force myself to not use ESC
 inoremap <ESC> <NOP>
 
@@ -56,32 +65,12 @@ set splitright
 set splitbelow
 
 " vim-go mappings
-au FileType go nnoremap <leader>Gr <Plug>(go-run)
-au FileType go nnoremap <leader>Gb <Plug>(go-build)
-au FileType go nnoremap <leader>Gt <Plug>(go-test)
-au FileType go nnoremap <leader>Gc <Plug>(go-coverage)
-au FileType go nnoremap <leader>Ges <Plug>(go-def-split)
-au FileType go nnoremap <leader>Gev <Plug>(go-def-vertical)
-au FileType go nnoremap <leader>Get <Plug>(go-def-tab)
-au FileType go nnoremap <leader>Gos <Plug>(go-doc)
-au FileType go nnoremap <leader>Gov <Plug>(go-doc-vertical)
-au FileType go nnoremap <leader>Gob <Plug>(go-doc-browser)
-au FileType go nnoremap <leader>Gs <Plug>(go-implements)
+au FileType go nnoremap <leader>Gd :GoDef<CR>
 
 " fugitive mappings
 " TODO: find a better way to clear shell history before running command
-nnoremap <silent> <leader>gg :Git<space>
 nnoremap <silent> <leader>gs :Gstatus<CR>
-nnoremap <silent> <leader>gd :Gdiff<CR>
-nnoremap <silent> <leader>gc :Gcommit<CR>
-nnoremap <silent> <leader>gb :Gblame<CR>
-nnoremap <silent> <leader>gB :Gbrowse<CR>
-nnoremap <silent> <leader>gl :Glog<CR>
-nnoremap <silent> <leader>gp :Git push<CR>
-nnoremap <silent> <leader>gr :Gread<CR>
-nnoremap <silent> <leader>gw :Gwrite<CR>
-nnoremap <silent> <leader>ge :Gedit<CR>
-nnoremap <silent> <leader>gi :Git add -p %<CR>
+nnoremap <leader>gg :Git<space>
 
 " make sure airline-tmux extension is disabled to not overwrite tmux theme
 let g:airline#extensions#tmuxline#enabled = 0
@@ -115,6 +104,9 @@ nnoremap <C-f> :CtrlP<CR>
 let g:ctrlp_map = '<Nop>'
 " index hidden files in CtrlP
 let g:ctrlp_show_hidden = 1
+
+" ack.vim
+nnoremap <C-b> :Ack<space>
 
 " NERDTree
 nnoremap <C-a> :NERDTreeToggle<CR>

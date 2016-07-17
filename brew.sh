@@ -33,8 +33,8 @@ brew install homebrew/dupes/openssh
 brew install homebrew/php/php56 --with-gmp
 
 # Install other useful binaries.
-brew install ack
 brew install git
+brew install the_silver_searcher
 brew install tree
 brew install tmux
 brew install wget
@@ -47,17 +47,19 @@ go get golang.org/x/tools/cmd/vet
 # php
 brew install composer
 
+# haskell
+brew install haskell-stack
+
 # cask
 brew tap caskroom/cask
 brew install brew-cask
 
-brew cask install dockertoolbox
+# TODO: add docker for mac
 brew cask install evernote
 brew cask install google-chrome
 brew cask install hipchat
 brew cask install iterm2
 brew cask install sequel-pro
-brew cask install virtualbox
 brew cask install vlc
 
 # Remove outdated versions from the cellar.
