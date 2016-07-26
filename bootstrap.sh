@@ -11,6 +11,8 @@ function doIt() {
 	source ~/.zshenv;
 	source ~/.zshrc;
 	cp ./work/.ssh/config ~/.ssh/config
+	# to avoid errors when pulling private repos using go get
+	git config --global url."https://${JPALMOUR_GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 }
 
 doIt
