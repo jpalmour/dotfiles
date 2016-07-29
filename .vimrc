@@ -51,6 +51,8 @@ set number
 
 " highlight problematic white space
 set list
+" TODO:turn the tab off just for golang
+" set listchars=tab:\¦\ ,trail:•,extends:#,nbsp:.
 set listchars=tab:\¦\ ,trail:•,extends:#,nbsp:.
 
 " backspace
@@ -171,9 +173,8 @@ endfunction
 
 " prompt for command in vimux pane
 map <leader>rp :VimuxPromptCommand<CR>
-" run last command in vimux pane
-map <Leader>rl :VimuxRunLastCommand<CR>
 " close vimux pane
 map <Leader>rq :VimuxCloseRunner<CR>
-" zoom the tmux runner page
-map <Leader>rz :VimuxZoomRunner<CR>
+
+" toggle tagbar
+map <leader>tb :TagbarToggle<CR>

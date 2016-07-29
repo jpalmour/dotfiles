@@ -32,6 +32,9 @@ brew install homebrew/dupes/grep
 brew install homebrew/dupes/openssh
 brew install homebrew/php/php56 --with-gmp
 
+# ctags for vim
+brew install ctags
+
 # Install other useful binaries.
 brew install git
 brew install the_silver_searcher

@@ -82,3 +82,6 @@
 [submodule ".tmux/tmux-battery"]
 	path = .tmux/tmux-battery
 	url = git@github.com:tmux-plugins/tmux-battery.git
+[submodule ".vim/bundle/tagbar"]
+	path = .vim/bundle/tagbar
+	url = git@github.com:majutsushi/tagbar.git
