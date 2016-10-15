@@ -67,10 +67,12 @@ set splitright
 set splitbelow
 
 " vim-go mappings
-au FileType go nnoremap <leader>Gd :GoDef<CR>
+" TODO: get filetype Go only
+nnoremap <leader>x :GoRun<CR>
+nnoremap <leader>tp :GoTest<CR>
+nnoremap <leader>tf :GoTestFunc<CR>
 
 " fugitive mappings
-" TODO: find a better way to clear shell history before running command
 nnoremap <silent> <leader>gs :Gstatus<CR>
 nnoremap <leader>gg :Git<space>
 
@@ -108,7 +110,7 @@ let g:ctrlp_map = '<Nop>'
 let g:ctrlp_show_hidden = 1
 
 " ack.vim
-nnoremap <C-b> :Ack<space>
+nnoremap <C-b> :Ack!<space>
 
 " NERDTree
 nnoremap <C-a> :NERDTreeToggle<CR>
@@ -178,3 +180,6 @@ map <Leader>rq :VimuxCloseRunner<CR>
 
 " toggle tagbar
 map <leader>tb :TagbarToggle<CR>
+
+" go to previous Sneak match (since default of , and \ are taken)
+nmap ' <Plug>SneakPrevious

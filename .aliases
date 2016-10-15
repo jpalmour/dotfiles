@@ -33,4 +33,9 @@ alias hide="defaults write com.apple.finder AppleShowAllFiles -bool false && kil
 
 # docker aliases
 alias dc="docker-compose"
-alias dm="docker-machine"
+
+# quick cd to repo dirs
+alias gosrc="cd $GOPATH/src"
+alias gocb="cd $GOPATH/src/github.com/cbdr"
+alias gojp="cd $GOPATH/src/github.com/jpalmour"
+alias repos="cd $REPO_DIR"
