@@ -42,6 +42,9 @@ brew install tree
 brew install tmux
 brew install wget
 
+# jq - command line json processor
+brew install jq
+
 # go
 brew install go
 go get golang.org/x/tools/cmd/godoc

@@ -14,3 +14,6 @@ export DISABLE_AUTO_TITLE=true
 
 # autostart a tmux session on logging in
 export ZSH_TMUX_AUTOSTART=true
+
+# show body by default with httpstat
+export HTTPSTAT_SHOW_BODY=true
