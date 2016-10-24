@@ -61,11 +61,13 @@ brew tap caskroom/cask
 brew install brew-cask
 
 # TODO: add docker for mac
-brew cask install evernote
-brew cask install google-chrome
+brew cask install gimp
 brew cask install hipchat
-brew cask install iterm2
+brew cask install skype
+brew cask install google-chrome
 brew cask install sequel-pro
+brew cask install skype
+brew cask install slack
 brew cask install vlc
 
 # Remove outdated versions from the cellar.
