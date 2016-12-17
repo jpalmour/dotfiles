@@ -45,6 +45,13 @@ brew install wget
 # jq - command line json processor
 brew install jq
 
+# node
+brew install nvm
+nvm install node
+
+# yarn packagae management
+brew install yarn
+
 # go
 brew install go
 go get golang.org/x/tools/cmd/godoc
@@ -59,6 +66,9 @@ brew install haskell-stack
 # cask
 brew tap caskroom/cask
 brew install brew-cask
+
+# web dev tools
+brew install imagemagick
 
 # TODO: add docker for mac
 brew cask install gimp

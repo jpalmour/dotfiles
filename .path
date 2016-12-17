@@ -4,3 +4,5 @@ export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 export PATH="${GOPATH//://bin:}/bin:$PATH"
 # add all $GOROOT/bin directories
 export PATH="${GOROOT//://bin:}/bin:$PATH"
+# add yarn's binaries
+export PATH="$PATH:$HOME/.yarn/bin"
