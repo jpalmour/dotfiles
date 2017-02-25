@@ -16,7 +16,7 @@
     ("b181ea0cc32303da7f9227361bb051bbb6c3105bb4f386ca22a06db319b08882" "2b8dff32b9018d88e24044eb60d8f3829bd6bbeab754e70799b78593af1c3aba" "962dacd99e5a99801ca7257f25be7be0cebc333ad07be97efd6ff59755e6148f" default)))
  '(package-selected-packages
    (quote
-    (neotree helm-projectile helm-swoop helm org-bullets key-chord go-mode airline-themes markdown-mode use-package evil-visual-mark-mode))))
+    (flycheck evil-leader exec-path-from-shell json-mode neotree helm-projectile helm-swoop helm org-bullets key-chord go-mode airline-themes markdown-mode use-package evil-visual-mark-mode))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -37,9 +37,11 @@
   :ensure t)
 
 (setq evil-want-C-u-scroll t)
-
+(require 'evil-leader)
+(global-evil-leader-mode)
 (require 'evil)
 (evil-mode t)
+(evil-leader/set-leader ",")
 
 (require 'powerline)
 (require 'powerline-evil)
@@ -89,3 +91,30 @@
                 (neotree-find file-name)))
         (message "Could not find git project root."))))
 (global-set-key [f8] 'neotree-project-dir)
+
+(use-package json-mode
+  :ensure t)
+(defun set-exec-path-from-shell-PATH ()
+  (let ((path-from-shell (replace-regexp-in-string
+                          "[ \t\n]*$"
+                          ""
+                          (shell-command-to-string "$SHELL --login -i -c 'echo $PATH'"))))
+    (setenv "PATH" path-from-shell)
+    (setq eshell-path-env path-from-shell) ; for eshell users
+    (setq exec-path (split-string path-from-shell path-separator))))
+(when window-system (set-exec-path-from-shell-PATH))
+(setenv "GOPATH" "~/Developer/Go")
+(add-to-list 'exec-path "~/Developer/Go/bin")
+(add-to-list 'exec-path "/usr/local/bin")
+(add-to-list 'exec-path "/usr/bin")
+(setq gofmt-command "goimports")
+(add-hook 'before-save-hook 'gofmt-before-save)
+(evil-leader/set-key-for-mode 'go-mode "," 'godef-jump)
+(evil-leader/set-key-for-mode 'go-mode "o" 'godef-jump-other-window)
+(evil-leader/set-key-for-mode 'go-mode "." 'pop-tag-mark)
+(evil-leader/set-key-for-mode 'go-mode "d" 'godef-describe)
+(evil-leader/set-key-for-mode 'go-mode "?" 'godoc-at-point)
+
+(use-package flycheck
+  :ensure t
+  :init (global-flycheck-mode))
