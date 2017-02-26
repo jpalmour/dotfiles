@@ -42,6 +42,11 @@
 (require 'evil)
 (evil-mode t)
 (evil-leader/set-leader ",")
+(evil-leader/set-key
+  "h" 'windmove-left
+  "l" 'windmove-right
+  "j" 'windmove-down
+  "k" 'windmove-up)
 
 (require 'powerline)
 (require 'powerline-evil)
@@ -50,8 +55,6 @@
 (load-theme 'solarized-dark t)
 
 (toggle-frame-fullscreen)
-;(setq mac-command-modifier 'meta)
-;(setq mac-right-command-modifier 'left)
 (global-linum-mode)
 (scroll-bar-mode -1)
 (require 'airline-themes)
@@ -62,7 +65,7 @@
 (key-chord-mode 1)
 (key-chord-define evil-insert-state-map "jk" 'evil-normal-state)
 (set-face-attribute 'default t :family "Inconsolata" :height 120)
-(require 'linum-off)
+;; (require 'linum-off)
 (with-eval-after-load 'org (setq org-startup-indented t))
 (require 'org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
@@ -74,7 +77,8 @@
 (global-set-key (kbd "M-i") 'helm-swoop)
 (global-set-key (kbd "C-x b") 'helm-buffers-list)
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
-(projectile-global-mode)
+;; (projectile-global-mode)
+(projectile-mode)
 (setq projectile-completion-system 'helm)
 (helm-projectile-on)
 (require 'neotree)
@@ -92,6 +96,9 @@
         (message "Could not find git project root."))))
 (global-set-key [f8] 'neotree-project-dir)
 
+(require 'go-guru)
+(require 'go-rename)
+
 (use-package json-mode
   :ensure t)
 (defun set-exec-path-from-shell-PATH ()
@@ -103,8 +110,8 @@
     (setq eshell-path-env path-from-shell) ; for eshell users
     (setq exec-path (split-string path-from-shell path-separator))))
 (when window-system (set-exec-path-from-shell-PATH))
-(setenv "GOPATH" "~/Developer/Go")
-(add-to-list 'exec-path "~/Developer/Go/bin")
+(setenv "GOPATH" "/Users/jpalmour/Developer/Go")
+(add-to-list 'exec-path "/Users/jpalmour/Developer/Go/bin")
 (add-to-list 'exec-path "/usr/local/bin")
 (add-to-list 'exec-path "/usr/bin")
 (setq gofmt-command "goimports")
@@ -118,3 +125,4 @@
 (use-package flycheck
   :ensure t
   :init (global-flycheck-mode))
+
