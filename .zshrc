@@ -15,3 +15,4 @@ source /usr/local/opt/chruby/share/chruby/chruby.sh
 
 # enable auto-switching of rubies specified by  .ruby-version files
 source /usr/local/opt/chruby/share/chruby/auto.sh
+
