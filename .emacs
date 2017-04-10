@@ -69,7 +69,7 @@
 (with-eval-after-load 'org (setq org-startup-indented t))
 (require 'org-bullets)
 (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
-(setq org-agenda-files (list "~/org/"))
+(setq org-agenda-files (list "~/org/meetings/" "~/org/bugs/" "~/org/weekly/" "~/org/meetings/"))
 (setq org-todo-keywords
        '((sequence "TODO(t)" "WAIT(w@/!)" "|" "DONE(d!)" "CANCELED(c@)")))
 (require 'helm-config)
@@ -78,6 +78,7 @@
 (global-set-key (kbd "C-x b") 'helm-buffers-list)
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
 ;; (projectile-global-mode)
+(setq projectile-enable-caching t)
 (projectile-mode)
 (setq projectile-completion-system 'helm)
 (helm-projectile-on)
@@ -95,6 +96,7 @@
                 (neotree-find file-name)))
         (message "Could not find git project root."))))
 (global-set-key [f8] 'neotree-project-dir)
+
 
 (require 'go-guru)
 (require 'go-rename)
@@ -149,3 +151,25 @@
 (add-hook 'go-mode-hook (lambda ()
                           (set (make-local-variable 'company-backends) '(company-go))
                           (company-mode)))
+
+(eval-after-load "evil"
+  '(progn
+     (define-key evil-normal-state-map (kbd "C-h") 'evil-window-left)
+     (define-key evil-normal-state-map (kbd "C-j") 'evil-window-down)
+     (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
+     (define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)))
+
+(setq backup-directory-alist '(("." . "~/.emacs.d/backup"))
+  backup-by-copying t    ; Don't delink hardlinks
+  version-control t      ; Use version numbers on backups
+  delete-old-versions t  ; Automatically delete excess backups
+  kept-new-versions 20   ; how many of the newest versions to keep
+  kept-old-versions 5    ; and how many of the old
+  )
+
+(setq org-export-with-toc nil)
+
+(global-set-key "\C-cl" 'org-store-link)
+     (global-set-key "\C-ca" 'org-agenda)
+     (global-set-key "\C-cc" 'org-capture)
+     (global-set-key "\C-cb" 'org-iswitchb)
