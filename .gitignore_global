@@ -36,8 +36,9 @@ ehthumbs.db
 Thumbs.db
 .idea
 
-# vim temp and swap files #
+# vim/emacs temp and swap files #
 ###########################
 *.swp
 *.swo
 *~
+\#*\#
