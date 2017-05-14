@@ -1,8 +1,8 @@
 # add brew coreutils
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
-# add all $GOPATH/bin directories
-export PATH="${GOPATH//://bin:}/bin:$PATH"
-# add all $GOROOT/bin directories
-export PATH="${GOROOT//://bin:}/bin:$PATH"
+# add go path binaries
+export PATH="$HOME/go/bin:$PATH"
+# add go root binaries
+export PATH="/usr/local/go/bin:$PATH"
 # add yarn's binaries
 export PATH="$PATH:$HOME/.yarn/bin"
