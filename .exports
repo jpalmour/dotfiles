@@ -3,10 +3,12 @@ export NVM_DIR=~/.nvm
 export EDITOR=vim
 
 export GOPATH=$HOME/go
-export GOROOT=/usr/local/go
 
 mkdir -p ~/Developer
 export DEV_DIR=~/Developer
+export REPO_PATH=$DEV_DIR/repos
+
+CDPATH=.:$GOPATH/src:$GOPATH/src/github.com/cbdr:$GOPATH/src/github.com/jpalmour:$REPO_PATH
 
 # prevent window names from not showing properly in tmuxinator
 export DISABLE_AUTO_TITLE=true
