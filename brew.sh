@@ -70,6 +70,10 @@ brew install brew-cask
 # web dev tools
 brew install imagemagick
 
+# for envsubst
+brew install gettext
+brew link --force gettext
+
 # TODO: add docker for mac
 brew cask install gimp
 brew cask install hipchat
