@@ -16,7 +16,7 @@ function doIt() {
 	source ~/.zshrc;
 
 	# generate work .ssh
-	./work/copy-ssh-config.sh
+	./work/.ssh/copy-ssh-config.sh
 
 	# to avoid errors when pulling private repos using go get
 	git config --global url."https://${JPALMOUR_GITHUB_TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
