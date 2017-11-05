@@ -6,12 +6,14 @@ git pull origin master
 git submodule update
 
 function doIt() {
-	rsync --exclude ".git/" \
-	      --exclude ".DS_Store" \
-	      --exclude "bootstrap.sh" \
-	      --exclude "README.md" ] \
-	      --exclude "*.swp" \
-	      -avh --no-perms . ~;
+	rsync --exclude ".git/"\
+	      --exclude ".DS_Store"\
+	      --exclude "bootstrap.sh"\
+	      --exclude "README.md"\
+	      --exclude "*.swp"\
+	      -avh\
+		  --no-perms\
+		  . ~;
 	source ~/.zshenv;
 	source ~/.zshrc;
 
