@@ -38,6 +38,10 @@ nnoremap <CR> :noh<CR><CR>
 :set ignorecase
 :set smartcase
 
+" make copy/paste work properly post-upgrade from OSX Yosemite, per
+" https://github.com/tmux/tmux/issues/543
+set clipboard=unnamed
+
 " use ag for ack.vim searches if present
 if executable('ag')
     let g:ackprg = 'ag --vimgrep'
