@@ -4,45 +4,24 @@
 [submodule ".vim/bundle/vim-pathogen"]
 	path = .vim/bundle/vim-pathogen
 	url = git@github.com:tpope/vim-pathogen.git
-[submodule ".vim/bundle/vim-commentary"]
-	path = .vim/bundle/vim-commentary
-	url = git@github.com:tpope/vim-commentary.git
 [submodule ".vim/bundle/ctrlp.vim"]
 	path = .vim/bundle/ctrlp.vim
 	url = git@github.com:ctrlpvim/ctrlp.vim.git
-[submodule ".vim/bundle/vim-closer"]
-	path = .vim/bundle/vim-closer
-	url = git@github.com:rstacruz/vim-closer.git
 [submodule ".vim/bundle/nerdtree"]
 	path = .vim/bundle/nerdtree
 	url = git@github.com:scrooloose/nerdtree.git
-[submodule ".vim/bundle/vim-pasta"]
-	path = .vim/bundle/vim-pasta
-	url = git@github.com:sickill/vim-pasta.git
-[submodule ".vim/bundle/vim-repeat"]
-	path = .vim/bundle/vim-repeat
-	url = git@github.com:tpope/vim-repeat.git
 [submodule ".vim/bundle/vim-sneak"]
 	path = .vim/bundle/vim-sneak
 	url = git@github.com:justinmk/vim-sneak.git
 [submodule ".vim/bundle/vim-surround"]
 	path = .vim/bundle/vim-surround
 	url = git@github.com:tpope/vim-surround.git
-[submodule ".vim/bundle/vim-unimpaired"]
-	path = .vim/bundle/vim-unimpaired
-	url = git@github.com:tpope/vim-unimpaired.git
 [submodule ".vim/bundle/vim-colors-solarized"]
 	path = .vim/bundle/vim-colors-solarized
 	url = git@github.com:altercation/vim-colors-solarized.git
-[submodule ".vim/bundle/vim-go"]
-	path = .vim/bundle/vim-go
-	url = git@github.com:fatih/vim-go.git
 [submodule ".vim/bundle/vim-sleuth"]
 	path = .vim/bundle/vim-sleuth
 	url = git@github.com:tpope/vim-sleuth.git
-[submodule ".vim/bundle/vim-fugitive"]
-	path = .vim/bundle/vim-fugitive
-	url = git@github.com:tpope/vim-fugitive.git
 [submodule ".vim/bundle/syntastic"]
 	path = .vim/bundle/syntastic
 	url = https://github.com/scrooloose/syntastic.git
@@ -67,12 +46,6 @@
 [submodule ".vim/bundle/promptline.vim"]
 	path = .vim/bundle/promptline.vim
 	url = git@github.com:edkolev/promptline.vim.git
-[submodule ".vim/bundle/vim-rsi"]
-	path = .vim/bundle/vim-rsi
-	url = git@github.com:tpope/vim-rsi.git
-[submodule ".vim/bundle/vim-eunuch"]
-	path = .vim/bundle/vim-eunuch
-	url = git@github.com:tpope/vim-eunuch.git
 [submodule ".vim/bundle/vim-cwdtabline"]
 	path = .vim/bundle/vim-cwdtabline
 	url = git@github.com:lag13/vim-cwdtabline.git
