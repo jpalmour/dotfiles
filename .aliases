@@ -1,6 +1,5 @@
 # shortcuts
 alias ~="cd ~"
-alias dev="cd $REPO_DIR"
 
 # easier navigation:
 alias -- -="cd -"
@@ -41,4 +40,7 @@ alias gojp="cd ~/go/src/github.com/jpalmour"
 alias repos="cd $REPO_DIR"
 
 # open VS code quickly
-alias c="code"
+alias vs="code"
+
+# github.com/cbdr/ats-cli
+alias sys="ats system"

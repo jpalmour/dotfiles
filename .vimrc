@@ -4,7 +4,7 @@ execute pathogen#infect()
 
 let mapleader=","
 
-nnoremap <leader>ev :vsplit $REPO_DIR/dotfiles/.vimrc<cr>
+nnoremap <leader>ev :vsplit $REPO_PATH/dotfiles/.vimrc<cr>
 
 " leave insert mode while keeping your hands on home row
 inoremap jk <ESC>
@@ -84,7 +84,7 @@ nnoremap <leader>gg :Git<space>
 let g:airline#extensions#tmuxline#enabled = 0
 
 " source dotfiles/.vimrc
-nnoremap <leader>so :!cp $REPO_DIR/dotfiles/.vimrc $MYVIMRC<CR>:so $MYVIMRC<CR>
+nnoremap <leader>so :!cp $REPO_PATH/dotfiles/.vimrc $MYVIMRC<CR>:so $MYVIMRC<CR>
 
 " 'zoom' by breaking current window to new tab
 nnoremap <leader>z :split<CR><C-w>T
@@ -159,7 +159,7 @@ function! EditRepo(repoPath)
   tabm 0
 endfunction
 command! -nargs=1 -complete=file EditRepo :call EditRepo(<f-args>)
-nnoremap <leader>er :EditRepo $REPO_DIR/
+nnoremap <leader>er :EditRepo $REPO_PATH/
 nnoremap <leader>eg :EditRepo $GOPATH/src/github.com/
 
 function! EditScratch(scratchFile)
