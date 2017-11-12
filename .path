@@ -1,5 +1,11 @@
+# add path containing brew executable 
+export PATH="$PATH:/usr/local/bin"
 # add brew coreutils
 export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 
- # add all $GOPATH/bin directories
- export PATH="$PATH:${GOPATH//://bin:}/bin"
+# set GOPATH and add all $GOPATH/bin directories
+export GOPATH=$HOME/go
+echo "GO PATH: $GOPATH"
+export PATH="$PATH:${GOPATH//://bin:}/bin"
+
+CDPATH=.:$GOPATH/src:$GOPATH/src/github.com/cbdr:$GOPATH/src/github.com/jpalmour:$REPO_PATH
