@@ -4,6 +4,7 @@ execute pathogen#infect()
 
 let mapleader=","
 
+" edit vimrc in new split
 nnoremap <leader>ev :vsplit $REPO_PATH/dotfiles/.vimrc<cr>
 
 " leave insert mode while keeping your hands on home row
@@ -11,9 +12,6 @@ inoremap jk <ESC>
 
 nnoremap H 0
 nnoremap L $
-
-" Find git merge conflict markers
-noremap <leader>fc /\v^[<\|=>]{7}( .*\|$)<CR>
 
 " use solarized dark colorscheme
 syntax enable
@@ -38,15 +36,6 @@ nnoremap <CR> :noh<CR><CR>
 :set ignorecase
 :set smartcase
 
-" make copy/paste work properly post-upgrade from OSX Yosemite, per
-" https://github.com/tmux/tmux/issues/543
-set clipboard=unnamed
-
-" use ag for ack.vim searches if present
-if executable('ag')
-    let g:ackprg = 'ag --vimgrep'
-endif
-
 " force myself to not use ESC
 inoremap <ESC> <NOP>
 
@@ -56,7 +45,6 @@ set number
 " highlight problematic white space
 set list
 " TODO:turn the tab off just for golang
-" set listchars=tab:\¦\ ,trail:•,extends:#,nbsp:.
 set listchars=tab:\¦\ ,trail:•,extends:#,nbsp:.
 
 " backspace
@@ -70,16 +58,6 @@ set splitright
 " Puts new split windows to the bottom of the current
 set splitbelow
 
-" vim-go mappings
-" TODO: get filetype Go only
-nnoremap <leader>x :GoRun<CR>
-nnoremap <leader>tp :GoTest<CR>
-nnoremap <leader>tf :GoTestFunc<CR>
-
-" fugitive mappings
-nnoremap <silent> <leader>gs :Gstatus<CR>
-nnoremap <leader>gg :Git<space>
-
 " make sure airline-tmux extension is disabled to not overwrite tmux theme
 let g:airline#extensions#tmuxline#enabled = 0
 
@@ -89,18 +67,11 @@ nnoremap <leader>so :!cp $REPO_PATH/dotfiles/.vimrc $MYVIMRC<CR>:so $MYVIMRC<CR>
 " 'zoom' by breaking current window to new tab
 nnoremap <leader>z :split<CR><C-w>T
 
-" close vim if NERDTree is only window left open
-autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-
 " move a line down
 nnoremap - ddp
 
 " move a line up
 nnoremap _ ddkP
-
-" make word all caps
-inoremap <c-u> <ESC>viwUea
-nnoremap <leader>u viwUe
 
 " tab navigation
 nnoremap <C-p> :tabprevious<CR>
@@ -113,71 +84,5 @@ let g:ctrlp_map = '<Nop>'
 " index hidden files in CtrlP
 let g:ctrlp_show_hidden = 1
 
-" Add Markdown Heading
-nnoremap <leader>mdh YpVr
-
-" ack.vim
-nnoremap <C-b> :Ack!<space>
-
 " NERDTree
 nnoremap <C-a> :NERDTreeToggle<CR>
-
-function! EditTodos()
-  tablast
-  let lastTabCWD=getcwd()
-  if lastTabCWD == $TODO_DIR
-    return
-  endif
-  if lastTabCWD == $NOTES_DIR
-    tabprevious
-    let secondToLastTabCWD=getcwd()
-    if secondToLastTabCWD == $TODO_DIR
-      return
-    endif
-  endif
-  silent !createTodoAndCleanPrevious
-  let todoFilePath=$TODO_DIR . '/' . system('todoFileName')
-  execute "tab split " . todoFilePath
-  lcd $TODO_DIR
-endfunction
-nnoremap <leader>et :call EditTodos()<CR>
-
-function! EditNotes()
-  tablast
-  let lastTabCWD=getcwd()
-  if lastTabCWD == $NOTES_DIR
-    return
-  endif
-  execute "tab split " . $NOTES_DIR
-  lcd $NOTES_DIR
-endfunction
-nnoremap <leader>en :call EditNotes()<CR>
-
-function! EditRepo(repoPath)
-  execute "tab split " . a:repoPath
-  execute "lcd " . a:repoPath
-  tabm 0
-endfunction
-command! -nargs=1 -complete=file EditRepo :call EditRepo(<f-args>)
-nnoremap <leader>er :EditRepo $REPO_PATH/
-nnoremap <leader>eg :EditRepo $GOPATH/src/github.com/
-
-function! EditScratch(scratchFile)
-  silent !mkdir -p /tmp/scratch
-  execute "tab split " . a:scratchFile
-  lcd %:p:h
-  tabm 0
-endfunction
-command! -nargs=1 -complete=file EditScratch :call EditScratch(<f-args>)
-nnoremap <leader>es :EditScratch /tmp/scratch/
-
-" prompt for command in vimux pane
-map <leader>rp :VimuxPromptCommand<CR>
-" close vimux pane
-map <Leader>rq :VimuxCloseRunner<CR>
-
-" toggle tagbar
-map <leader>tb :TagbarToggle<CR>
-
-" go to previous Sneak match (since default of , and \ are taken)
-nmap ' <Plug>SneakPrevious
