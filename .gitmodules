@@ -46,9 +46,6 @@
 [submodule ".vim/bundle/vim-cwdtabline"]
 	path = .vim/bundle/vim-cwdtabline
 	url = git@github.com:lag13/vim-cwdtabline.git
-[submodule ".tmux/tmux-battery"]
-	path = .tmux/tmux-battery
-	url = git@github.com:tmux-plugins/tmux-battery.git
 [submodule ".tmux/plugins/tpm"]
 	path = .tmux/plugins/tpm
 	url = https://github.com/tmux-plugins/tpm
