@@ -86,3 +86,4 @@ let g:ctrlp_show_hidden = 1
 
 " NERDTree
 nnoremap <C-a> :NERDTreeToggle<CR>
+let NERDTreeShowHidden=1
