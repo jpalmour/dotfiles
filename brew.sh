@@ -74,6 +74,8 @@ brew install imagemagick
 brew install gettext
 brew link --force gettext
 
+brew install kubectl
+
 # TODO: add docker for mac
 brew cask install gimp
 brew cask install hipchat
@@ -83,6 +85,8 @@ brew cask install sequel-pro
 brew cask install skype
 brew cask install slack
 brew cask install vlc
+brew cask install docker
+brew cask install minikube
 
 # Remove outdated versions from the cellar.
 brew cleanup
