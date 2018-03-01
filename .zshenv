@@ -8,7 +8,7 @@ source ~/.exports
 source ~/.aliases
 
 # functions
-source ~/functions/*.sh
+# source ~/functions/*.sh
 
 # work-specific aliases and functions
 source ~/work/.work
