@@ -3,8 +3,6 @@
 # install powerline fonts
 ~/fonts/install.sh
 
-# Install command-line tools using Homebrew.
-
 # Ask for the administrator password upfront.
 sudo -v
 
@@ -50,10 +48,6 @@ brew install yarn
 brew install go
 go get golang.org/x/tools/cmd/godoc
 go get golang.org/x/tools/cmd/vet
-
-# php
-brew install homebrew/php/php56 --with-gmp
-brew install composer
 
 # haskell
 brew install haskell-stack
