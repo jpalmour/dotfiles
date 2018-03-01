@@ -3,7 +3,7 @@
 cd "$(dirname -- "$0")"
 
 git pull origin master
-git submodule update
+git submodule update --init --recursive
 
 function doIt() {
 	rsync --exclude ".git/"\

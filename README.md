@@ -1,20 +1,9 @@
 # Joseph's dotfiles
 
-
 ### Installation
-Install [Homebrew](http://brew.sh/) and then:
-
-Clone repo somewhere other than ~, `cd` into repository, and then:
-```bash
-source bootstrap.sh
-```
-
-### Install Homebrew formulae
-```bash
-./brew.sh
-```
-
-### Update OS X settings
-```bash
-./.osx
-```
+1. Install [Homebrew](http://brew.sh/)
+2. Install zsh: `brew install zsh zsh-completions`
+3. Make zsh default: `sudo sh -c "echo $(which zsh) >> /etc/shells"` then `chsh -s $(which zsh)`
+4. Clone repo somewhere other than ~, `cd` into repository, and then execute: `source bootstrap.sh`
+5. Install Homebrew formulae: `./brew.sh`
+6. Update OS X settings: `./.osx`
