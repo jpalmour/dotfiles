@@ -2,6 +2,8 @@
 
 cd "$(dirname -- "$0")"
 
+source ~/.secrets
+
 git pull origin master
 git submodule update --init --recursive
 
