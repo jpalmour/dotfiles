@@ -23,11 +23,10 @@ brew install coreutils
 brew install findutils
 # Install GNU `sed`, overwriting the built-in `sed`.
 brew install gnu-sed --with-default-names
-
-# Install more recent versions of some OS X tools.
+# Install GNU `grep
+brew install grep --with-default-names
+# Install more recent version of vim
 brew install vim --override-system-vi
-brew install homebrew/dupes/grep
-brew install homebrew/dupes/openssh
 
 # Install other useful binaries.
 brew install git
