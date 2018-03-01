@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-cd "$(dirname "$0")"
+cd "$(dirname -- "$0")"
 
 git pull origin master
 git submodule update
