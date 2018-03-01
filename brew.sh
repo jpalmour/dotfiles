@@ -30,10 +30,6 @@ brew install gnu-sed --with-default-names
 brew install vim --override-system-vi
 brew install homebrew/dupes/grep
 brew install homebrew/dupes/openssh
-brew install homebrew/php/php56 --with-gmp
-
-# ctags for vim
-brew install ctags
 
 # Install other useful binaries.
 brew install git
@@ -41,15 +37,13 @@ brew install the_silver_searcher
 brew install tree
 brew install tmux
 brew install wget
-
-# jq - command line json processor
 brew install jq
 
 # node
 brew install nvm
 nvm install node
 
-# yarn packagae management
+# yarn package management
 brew install yarn
 
 # go
@@ -58,6 +52,7 @@ go get golang.org/x/tools/cmd/godoc
 go get golang.org/x/tools/cmd/vet
 
 # php
+brew install homebrew/php/php56 --with-gmp
 brew install composer
 
 # haskell
@@ -76,10 +71,8 @@ brew link --force gettext
 
 brew install kubectl
 
-# TODO: add docker for mac
 brew cask install gimp
 brew cask install hipchat
-brew cask install skype
 brew cask install google-chrome
 brew cask install sequel-pro
 brew cask install skype

@@ -39,8 +39,5 @@ alias gocb="cd ~/go/src/github.com/cbdr"
 alias gojp="cd ~/go/src/github.com/jpalmour"
 alias repos="cd $REPO_DIR"
 
-# open VS code quickly
-alias vs="code"
-
 # github.com/cbdr/ats-cli
 alias sys="ats system"
