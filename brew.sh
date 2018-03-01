@@ -13,7 +13,7 @@ while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 brew update
 
 # Upgrade any already-installed formulae.
-brew upgrade --all
+brew upgrade
 
 # Install GNU core utilities (those that come with OS X are outdated).
 # Don’t forget to add `$(brew --prefix coreutils)/libexec/gnubin` to `$PATH`.
@@ -45,8 +45,6 @@ brew install yarn
 
 # go
 brew install go
-go get golang.org/x/tools/cmd/godoc
-go get golang.org/x/tools/cmd/vet
 
 # haskell
 brew install haskell-stack
@@ -73,6 +71,7 @@ brew cask install slack
 brew cask install vlc
 brew cask install docker
 brew cask install minikube
+brew cask install visual-studio-code
 
 # Remove outdated versions from the cellar.
 brew cleanup
