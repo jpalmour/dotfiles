@@ -72,6 +72,7 @@ brew cask install vlc
 brew cask install docker
 brew cask install minikube
 brew cask install visual-studio-code
+brew cask install lastpass
 
 # Remove outdated versions from the cellar.
 brew cleanup
