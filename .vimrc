@@ -16,7 +16,6 @@ nnoremap L $
 " use solarized dark colorscheme
 syntax enable
 set background=dark
-colorscheme solarized
 
 " show matching parentheses/brackets
 set showmatch
