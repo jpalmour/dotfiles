@@ -6,5 +6,6 @@
             "before": ["j","k"],
             "after": ["<Esc>"]
         }
-    ]
+    ],
+    "editor.minimap.enabled": false
 }

@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# install powerline fonts
-~/fonts/install.sh
-
 # Ask for the administrator password upfront.
 sudo -v
 
@@ -65,6 +62,7 @@ brew install kubectl
 brew cask install gimp
 brew cask install hipchat
 brew cask install google-chrome
+brew cask install firefox
 brew cask install sequel-pro
 brew cask install skype
 brew cask install slack
