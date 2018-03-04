@@ -13,7 +13,6 @@ inoremap jk <ESC>
 nnoremap H 0
 nnoremap L $
 
-" use solarized dark colorscheme
 syntax enable
 set background=dark
 
@@ -56,9 +55,6 @@ set pastetoggle=<F12>
 set splitright
 " Puts new split windows to the bottom of the current
 set splitbelow
-
-" make sure airline-tmux extension is disabled to not overwrite tmux theme
-let g:airline#extensions#tmuxline#enabled = 0
 
 " source dotfiles/.vimrc
 nnoremap <leader>so :!cp $REPO_PATH/dotfiles/.vimrc $MYVIMRC<CR>:so $MYVIMRC<CR>
