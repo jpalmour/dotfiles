@@ -32,6 +32,7 @@ brew install tree
 brew install tmux
 brew install wget
 brew install jq
+brew cask install ngrok
 
 # node
 brew install nvm
