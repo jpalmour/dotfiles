@@ -72,6 +72,7 @@ brew cask install minikube
 brew cask install visual-studio-code
 brew cask install lastpass
 brew cask install iterm2
+brew cask install gpg-suite
 
 # Remove outdated versions from the cellar.
 brew cleanup
