@@ -14,8 +14,8 @@ function doIt() {
 	      -avh\
 		  --no-perms\
 		  . ~;
-
-    # install brew if not already installed
+	
+	# install brew if not already installed
 	command -v brew > /dev/null || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 	# install zsh if not already installed
@@ -35,7 +35,6 @@ function doIt() {
 
 	# install things managed by brew
 	~/brew.sh
-	
 }
 
 doIt
