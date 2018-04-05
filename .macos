@@ -56,9 +56,9 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool
 defaults -currentHost write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
 defaults write NSGlobalDomain com.apple.mouse.tapBehavior -int 1
 
-# Set a blazingly fast keyboard repeat rate
-defaults write NSGlobalDomain KeyRepeat -int 1
-defaults write NSGlobalDomain InitialKeyRepeat -int 10
+# Set a faster keyboard repeat rate
+defaults write NSGlobalDomain KeyRepeat -int 2 # default is 2 (30 ms)
+defaults write NSGlobalDomain InitialKeyRepeat -int 12 # default is 15 (225 ms)
 
 ###############################################################################
 # Screen                                                                      #
