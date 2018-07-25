@@ -33,6 +33,7 @@ brew install tmux
 brew install wget
 brew install jq
 brew cask install ngrok
+brew cask install wireshark
 
 # node
 brew install nvm
