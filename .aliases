@@ -21,11 +21,6 @@ alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resource
 # Get OS X Software Updates, and update Homebrew and its installed packages
 alias update='sudo softwareupdate -i -a; brew update; brew upgrade --all; brew cleanup'
 
-# Empty the Trash on all mounted volumes and the main HDD.
-# Also, clear Apple’s System Logs to improve shell startup speed.
-# Finally, clear download history from quarantine. https://mths.be/bum
-alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; sudo rm -rfv ~/.Trash; sudo rm -rfv /private/var/log/asl/*.asl; sqlite3 ~/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV* 'delete from LSQuarantineEvent'"
-
 # Show/hide hidden files in Finder
 alias show="defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder"
 alias hide="defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder"
@@ -34,10 +29,6 @@ alias hide="defaults write com.apple.finder AppleShowAllFiles -bool false && kil
 alias dc="docker-compose"
 
 # quick cd to repo dirs
-alias gosrc="cd ~/go/src"
 alias gocb="cd ~/go/src/github.com/cbdr"
 alias gojp="cd ~/go/src/github.com/jpalmour"
 alias repos="cd $REPO_DIR"
-
-# github.com/cbdr/ats-cli
-alias sys="ats system"
