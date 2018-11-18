@@ -2,6 +2,10 @@
 
 ### Installation
 
-Clone repo somewhere other than ~, `cd` into repository, and then execute: `source bootstrap.sh`
+1. `mkdir ~/repos`
+2. populate ~/.secrets
+3. clone repo inside `~/repos`
+4. `cd` into repository
+5. execute: `source bootstrap.sh`
 
 To update macOS settings execute: `./.macos`
