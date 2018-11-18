@@ -7,6 +7,4 @@ export PATH="$(brew --prefix coreutils)/libexec/gnubin:$PATH"
 export GOPATH=$HOME/go
 export PATH="$PATH:${GOPATH//://bin:}/bin"
 
-export PATH="$PATH:$HOME/Library/Python/3.6/bin"
-
 CDPATH=.:$GOPATH/src:$GOPATH/src/github.com/cbdr:$GOPATH/src/github.com/jpalmour:$REPO_PATH
