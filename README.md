@@ -4,7 +4,7 @@
 
 1. populate ~/.secrets
 2. add keys to ~/.ssh
-3.`mkdir ~/repos`
+3. `mkdir ~/repos`
 4. clone repo inside `~/repos`
 5. `cd` into repository
 6. execute: `source bootstrap.sh`
