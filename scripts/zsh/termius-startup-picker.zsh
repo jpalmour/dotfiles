@@ -37,7 +37,7 @@ for r in $repos; do
     fi
     
     # Add entry for default branch if no matching session exists
-    session_name="${r}:${default_branch}"
+    session_name="${r}_${default_branch}"
     if [[ -z ${has_session[$session_name]} ]]; then
       repo_entries+=("$session_name")
       repo_paths+=("$repo_path/$default_branch")
@@ -48,7 +48,7 @@ for r in $repos; do
       worktrees=(${(f)"$(find "$repo_path/worktrees" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | sort)"})
       for wt in $worktrees; do
         wt_name="${wt##*/}"
-        session_name="${r}:${wt_name}"
+        session_name="${r}_${wt_name}"
         if [[ -z ${has_session[$session_name]} ]]; then
           repo_entries+=("$session_name")
           repo_paths+=("$wt")
@@ -140,7 +140,7 @@ while true; do
       if gh repo create "$project_name" --clone --private --template jpalmour/agent-container-template; then
         echo "✅ Project created successfully!"
         # Start a new tmux session in the main directory
-        tmux new-session -s "${project_name}:main" -c "$project_path/main"
+        tmux new-session -s "${project_name}_main" -c "$project_path/main"
       else
         echo "Failed to create GitHub repository"
         # Clean up directories on failure
