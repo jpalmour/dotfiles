@@ -57,10 +57,11 @@ fi
 if ! command -v slack >/dev/null 2>&1; then
   echo "[ubuntu] installing Slack..."
   cd /tmp
-  curl -fsSLO https://downloads.slack-edge.com/releases/linux/x64/latest/slack-desktop-latest.deb
-  sudo apt-get install -y ./slack-desktop-latest.deb || sudo apt-get -f install -y
-  rm -f slack-desktop-latest.deb
+  wget -O slack-latest.deb "$url"
+  sudo apt-get install -y ./slack-latest.deb || sudo apt-get -f install -y
+  rm -f slack-latest.deb
 fi
+
 
 # --- 1Password desktop + CLI (official repo) ---------------------------------
 if ! command -v 1password >/dev/null 2>&1; then
