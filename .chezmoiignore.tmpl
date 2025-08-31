@@ -10,6 +10,36 @@
 {{ if eq .chezmoi.os "windows" -}}dot_zprofile.tmpl{{- end }}
 
 {{/* Bootstrap entrypoints: pick the right one per OS */}}
-{{ if ne .chezmoi.os "windows" -}}run_once_000_bootstrap.ps1.tmpl{{- end }}
-{{ if eq .chezmoi.os "windows" -}}run_once_000_bootstrap.sh.tmpl{{- end }}
+{{ if ne .chezmoi.os "windows" -}}000_bootstrap.ps1{{- end }}
+{{ if eq .chezmoi.os "windows" -}}000_bootstrap.sh{{- end }}
+
+{{ if eq .chezmoi.os "windows" -}}
+executable_bin/termius-startup-picker.zsh
+{{- end }}
+
+# Ignore generated shell files we don't care about
+.bashrc
+.bash_logout
+.viminfo
+.sudo_as_admin_successful
+
+# Ignore noisy runtime dirs
+.cache/**
+.snap/**
+.local/**
+.gnupg/**
+repos/**
+snap/**
+.config/**
+
+# Ignore user data dirs
+Desktop/**
+Documents/**
+Downloads/**
+Music/**
+Pictures/**
+Public/**
+Templates/**
+Videos/**
+
 
