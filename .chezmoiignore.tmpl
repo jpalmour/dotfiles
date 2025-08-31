@@ -1,7 +1,7 @@
 {{/* OS trees */}}
-{{ if ne .chezmoi.os "linux"  -}}ubuntu/**{{- end }}
-{{ if ne .chezmoi.os "darwin" -}}macos/**{{- end }}
-{{ if ne .chezmoi.os "windows" -}}windows/**{{- end }}
+{{ if ne .chezmoi.os "linux"  -}}010_ubuntu_setup.sh{{- end }}
+{{ if ne .chezmoi.os "darwin" -}}010_macos_setup.sh{{- end }}
+{{ if ne .chezmoi.os "windows" -}}010_windows_setup.ps1{{- end }}
 
 {{/* Profiles: .profile only for Linux */}}
 {{ if ne .chezmoi.os "linux" -}}dot_profile.tmpl{{- end }}
