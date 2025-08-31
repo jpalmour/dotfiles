@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[bootstrap] start on {{ .chezmoi.os }} ({{ .kernel.arch }})"
+echo "[bootstrap] start on {{ .chezmoi.os }} ({{ .chezmoi.arch }})"
 
 # Shared, OS-agnostic one-time bits
 mkdir -p "$HOME/repos/github.com/jpalmour"
