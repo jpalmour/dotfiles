@@ -1,0 +1,5 @@
+# Source: ~/.local/share/chezmoi/chezmoi.toml.tmpl
+[data]
+  personal_email = "{{ promptString `Personal email (for global git, SSH key comment)` `jpalmour@gmail.com` }}"
+  work_email     = "{{ promptString `Work email (leave blank if none)` `` }}"
+  is_work_machine = {{ promptBool "Is this a WORK machine? (y/N)" false }}
