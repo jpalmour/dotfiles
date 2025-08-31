@@ -53,15 +53,11 @@ if ! command -v google-chrome >/dev/null 2>&1; then
   rm -f google-chrome-stable_current_amd64.deb
 fi
 
-# --- Slack (official .deb) ----------------------------------------------------
+# --- Slack (via Snap) ---------------------------------------------------------
 if ! command -v slack >/dev/null 2>&1; then
-  echo "[ubuntu] installing Slack..."
-  cd /tmp
-  wget -O slack-latest.deb "$url"
-  sudo apt-get install -y ./slack-latest.deb || sudo apt-get -f install -y
-  rm -f slack-latest.deb
+  echo "[ubuntu] installing Slack via Snap..."
+  sudo snap install slack --classic
 fi
-
 
 # --- 1Password desktop + CLI (official repo) ---------------------------------
 if ! command -v 1password >/dev/null 2>&1; then
