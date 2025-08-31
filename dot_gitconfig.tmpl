@@ -1,0 +1,3 @@
+[user]
+    name = Joseph Palmour
+    email = {{ if and .is_work_machine (ne .work_email ``) -}}{{ .work_email }}{{- else -}}{{ .personal_email }}{{- end }}

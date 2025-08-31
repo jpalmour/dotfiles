@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[bootstrap] start on {{ .chezmoi.os }} ({{ .kernel.arch }})"
+
+# Shared, OS-agnostic one-time bits
+mkdir -p "$HOME/repos/github.com/jpalmour"
+
+# Pick email: prefer work if this is marked a work machine and work_email is set
+email="{{- if and .is_work_machine (ne .work_email ``) -}}{{ .work_email }}{{- else -}}{{ .personal_email }}{{- end -}}"
+
+# Generate SSH key if missing (ed25519) with chosen email as comment
+if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+  echo "[bootstrap] generating SSH key for ${email} ..."
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  ssh-keygen -t ed25519 -C "{{`{{ email }}`}}" -f "$HOME/.ssh/id_ed25519" -N ""
+fi
+
+# OS-specific next steps
+case "{{ .chezmoi.os }}" in
+  linux)  bash "{{ .chezmoi.sourceDir }}/ubuntu/run_once_010_ubuntu_setup.sh" ;;
+  darwin) bash "{{ .chezmoi.sourceDir }}/macos/run_once_010_macos_setup.sh"  || true ;;
+esac
+
+# Load nvm
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
+# Ensure default Node LTS is installed
+nvm install --lts
+nvm use --lts
+
+# Install/upgrade tools
+npm install -g @openai/codex claude-code @google/gemini-cli
+
+echo "[bootstrap] done."

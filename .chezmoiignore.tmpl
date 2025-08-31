@@ -1,0 +1,15 @@
+{{/* OS trees */}}
+{{ if ne .chezmoi.os "linux"  -}}ubuntu/**{{- end }}
+{{ if ne .chezmoi.os "darwin" -}}macos/**{{- end }}
+{{ if ne .chezmoi.os "windows" -}}windows/**{{- end }}
+
+{{/* Profiles: .profile only for Linux */}}
+{{ if ne .chezmoi.os "linux" -}}dot_profile.tmpl{{- end }}
+
+{{/* zsh login profile: on Linux+macOS only */}}
+{{ if eq .chezmoi.os "windows" -}}dot_zprofile.tmpl{{- end }}
+
+{{/* Bootstrap entrypoints: pick the right one per OS */}}
+{{ if ne .chezmoi.os "windows" -}}run_once_000_bootstrap.ps1.tmpl{{- end }}
+{{ if eq .chezmoi.os "windows" -}}run_once_000_bootstrap.sh.tmpl{{- end }}
+

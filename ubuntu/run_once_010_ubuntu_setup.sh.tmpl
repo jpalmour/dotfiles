@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[ubuntu] bootstrap starting..."
+
+# --- Refresh & base toolchain -------------------------------------------------
+echo "[ubuntu] apt update/upgrade"
+sudo apt-get update -y
+sudo apt-get upgrade -y
+
+echo "[ubuntu] base CLI tools"
+sudo apt-get install -y \
+  git curl wget vim tmux tree jq ripgrep \
+  ca-certificates gnupg lsb-release build-essential apt-transport-https
+
+# --- Zsh + oh-my-zsh ----------------------------------------------------------
+if ! command -v zsh >/dev/null 2>&1; then
+  echo "[ubuntu] installing zsh..."
+  sudo apt-get install -y zsh
+fi
+
+if [ ! -d "$HOME/.oh-my-zsh" ]; then
+  echo "[ubuntu] installing oh-my-zsh..."
+  RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+fi
+
+# Make zsh the default shell (if not already)
+if [ "${SHELL:-}" != "$(command -v zsh)" ]; then
+  echo "[ubuntu] setting default shell to zsh..."
+  chsh -s "$(command -v zsh)"
+fi
+
+# --- Visual Studio Code (Microsoft apt repo) ----------------------------------
+if ! command -v code >/dev/null 2>&1; then
+  echo "[ubuntu] installing Visual Studio Code..."
+  wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+  sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/packages.microsoft.gpg
+  echo "deb [arch=$(dpkg --print-architecture)] https://packages.microsoft.com/repos/code stable main" \
+  | sudo tee /etc/apt/sources.list.d/vscode.list >/dev/null
+  rm -f packages.microsoft.gpg
+  sudo apt-get update -y
+  sudo apt-get install -y code
+fi
+
+# --- Google Chrome (official .deb) -------------------------------------------
+if ! command -v google-chrome >/dev/null 2>&1; then
+  echo "[ubuntu] installing Google Chrome..."
+  cd /tmp
+  curl -fsSLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  # If you're on arm64, swap to chromium or aarch64 build as needed.
+  sudo apt-get install -y ./google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+  rm -f google-chrome-stable_current_amd64.deb
+fi
+
+# --- Slack (official .deb) ----------------------------------------------------
+if ! command -v slack >/dev/null 2>&1; then
+  echo "[ubuntu] installing Slack..."
+  cd /tmp
+  curl -fsSLO https://downloads.slack-edge.com/releases/linux/x64/latest/slack-desktop-latest.deb
+  sudo apt-get install -y ./slack-desktop-latest.deb || sudo apt-get -f install -y
+  rm -f slack-desktop-latest.deb
+fi
+
+# --- 1Password desktop + CLI (official repo) ---------------------------------
+if ! command -v 1password >/dev/null 2>&1; then
+  echo "[ubuntu] adding 1Password repo..."
+  curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+    | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] \
+https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" \
+  | sudo tee /etc/apt/sources.list.d/1password.list >/dev/null
+  sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
+  curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+    | gpg --dearmor | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.gpg >/dev/null
+  sudo apt-get update -y
+  sudo apt-get install -y 1password
+fi
+
+if ! command -v op >/dev/null 2>&1; then
+  echo "[ubuntu] installing 1Password CLI..."
+  sudo apt-get install -y 1password-cli
+fi
+
+# --- Docker Engine (official apt repo) ---------------------------------------
+if ! command -v docker >/dev/null 2>&1; then
+  echo "[ubuntu] installing Docker Engine..."
+  sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
+  sudo install -m 0755 -d /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+    | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  sudo chmod a+r /etc/apt/keyrings/docker.gpg
+  . /etc/os-release
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME} stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  sudo apt-get update -y
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  sudo usermod -aG docker "$USER" || true
+fi
+
+# --- Node via nvm (optional but handy parity with macOS) ---------------------
+if [ ! -d "$HOME/.nvm" ]; then
+  echo "[ubuntu] installing nvm..."
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+fi
+# shellcheck disable=SC1091
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+  nvm install --lts
+  nvm use --lts
+fi
+
+echo "[ubuntu] bootstrap done ✅  (log out/in to use docker without sudo)"
+

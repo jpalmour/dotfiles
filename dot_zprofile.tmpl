@@ -1,0 +1,12 @@
+# ~/.zprofile — for zsh login shells
+
+# Keep PATH consistent with ~/.profile
+export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+
+# nvm (if present)
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
+# Hand off to interactive config
+[ -f "$HOME/.zshrc" ] && . "$HOME/.zshrc"
