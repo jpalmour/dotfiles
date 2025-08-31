@@ -17,22 +17,4 @@ if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
   ssh-keygen -t ed25519 -C "{{`{{ email }}`}}" -f "$HOME/.ssh/id_ed25519" -N ""
 fi
 
-# OS-specific next steps
-case "{{ .chezmoi.os }}" in
-  linux)  bash "{{ .chezmoi.sourceDir }}/ubuntu/run_once_010_ubuntu_setup.sh" ;;
-  darwin) bash "{{ .chezmoi.sourceDir }}/macos/run_once_010_macos_setup.sh"  || true ;;
-esac
-
-# Load nvm
-if [ -s "$HOME/.nvm/nvm.sh" ]; then
-  . "$HOME/.nvm/nvm.sh"
-fi
-
-# Ensure default Node LTS is installed
-nvm install --lts
-nvm use --lts
-
-# Install/upgrade tools
-npm install -g @openai/codex claude-code @google/gemini-cli
-
 echo "[bootstrap] done."

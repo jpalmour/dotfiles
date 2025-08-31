@@ -10,8 +10,14 @@
 {{ if eq .chezmoi.os "windows" -}}dot_zprofile.tmpl{{- end }}
 
 {{/* Bootstrap entrypoints: pick the right one per OS */}}
-{{ if ne .chezmoi.os "windows" -}}000_bootstrap.ps1{{- end }}
-{{ if eq .chezmoi.os "windows" -}}000_bootstrap.sh{{- end }}
+{{ if ne .chezmoi.os "windows" -}}
+000_bootstrap.ps1
+020_ai_tools_setup.ps1
+{{- end }}
+{{ if eq .chezmoi.os "windows" -}}
+000_bootstrap.sh
+020_ai_tools_setup.sh
+{{- end }}
 
 {{ if eq .chezmoi.os "windows" -}}
 executable_bin/termius-startup-picker.zsh

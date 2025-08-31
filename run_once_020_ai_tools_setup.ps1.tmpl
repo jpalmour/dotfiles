@@ -1,0 +1,15 @@
+$ErrorActionPreference = "Stop"
+echo "[bootstrap] installing/upgrading AI CLI tools via npm..."
+
+# Load nvm (installed by the OS-specific 010 script)
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+else
+  echo "[bootstrap] ERROR: nvm not found at ~/.nvm/nvm.sh; ensure 010 script installed it." >&2
+  exit 1
+fi
+
+nvm install --lts
+nvm use --lts
+
+npm install -g @openai/codex claude-code @google/gemini-cli
