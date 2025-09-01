@@ -25,10 +25,10 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
-# Make zsh the default shell (if not already)
-if [ "${SHELL:-}" != "$(command -v zsh)" ]; then
+# Set zsh as the default shell if not already
+if [ "$(getent passwd "$USER" | awk -F: '{print $7}')" != "$(command -v zsh)" ]; then
   echo "[ubuntu] setting default shell to zsh..."
-  chsh -s "$(command -v zsh)"
+  sudo chsh -s "$(command -v zsh)" "$USER" || true
 fi
 
 # --- Visual Studio Code (Microsoft apt repo) ----------------------------------
