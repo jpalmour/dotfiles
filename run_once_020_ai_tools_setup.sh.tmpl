@@ -6,9 +6,5 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
 fi
 
-# Ensure default Node LTS is installed
-nvm install --lts
-nvm use --lts
-
 # Install/upgrade tools
 npm install -g @openai/codex claude-code @google/gemini-cli
