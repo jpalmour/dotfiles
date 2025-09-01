@@ -25,7 +25,8 @@ brew install \
   ripgrep \
   coreutils \
   gnu-sed \
-  make
+  make \
+  gh
 
 # --- Zsh ---
 if ! command -v zsh >/dev/null 2>&1; then
@@ -49,18 +50,12 @@ fi
 # --- GUI apps (brew cask) matching your Ubuntu list ---
 echo "[macos] installing GUI apps (casks)..."
 brew install --cask \
+  visual-studio-code \
   google-chrome \
   slack \
   1password \
-  docker
-
-# --- GitHub CLI ---
-echo "[macos] installing GitHub CLI..."
-brew install gh
-
-# --- Ghostty terminal emulator ---
-echo "[macos] installing Ghostty..."
-brew install --cask ghostty
+  docker \
+  ghostty
 
 # --- Developer/AI tools ---
 echo "[macos] installing developer/AI tools..."

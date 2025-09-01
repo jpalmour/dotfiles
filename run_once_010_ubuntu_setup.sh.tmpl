@@ -96,15 +96,12 @@ https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME} stable" \
   sudo usermod -aG docker "$USER" || true
 fi
 
-# --- GitHub CLI ---------------------------------------------------------------
+# --- Snap packages (GitHub CLI, Ghostty) -------------------------------------
+echo "[ubuntu] installing Snap packages..."
 if ! command -v gh >/dev/null 2>&1; then
-  echo "[ubuntu] installing GitHub CLI..."
   sudo snap install gh
 fi
-
-# --- Ghostty terminal emulator ------------------------------------------------
 if ! command -v ghostty >/dev/null 2>&1; then
-  echo "[ubuntu] installing Ghostty..."
   sudo snap install ghostty --classic
 fi
 
