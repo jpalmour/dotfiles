@@ -51,9 +51,16 @@ echo "[macos] installing GUI apps (casks)..."
 brew install --cask \
   google-chrome \
   slack \
-  ghostty \
   1password \
   docker
+
+# --- GitHub CLI ---
+echo "[macos] installing GitHub CLI..."
+brew install gh
+
+# --- Ghostty terminal emulator ---
+echo "[macos] installing Ghostty..."
+brew install --cask ghostty
 
 # --- Developer/AI tools ---
 echo "[macos] installing developer/AI tools..."
