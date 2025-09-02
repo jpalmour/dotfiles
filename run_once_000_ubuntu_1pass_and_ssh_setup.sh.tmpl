@@ -1,0 +1,58 @@
+set -euo pipefail
+
+arch="$(dpkg --print-architecture)"
+repo_list="/etc/apt/sources.list.d/1password.list"
+archive_key="/usr/share/keyrings/1password-archive-keyring.gpg"
+debsig_pol_dir="/etc/debsig/policies/AC2D62742012EA22"
+debsig_key_dir="/usr/share/debsig/keyrings/AC2D62742012EA22"
+
+ensure_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "Missing $1"; exit 1; }; }
+ensure_cmd curl
+ensure_cmd gpg
+ensure_cmd sudo
+
+# Add official repo (once)
+if [ ! -f "$repo_list" ] || [ ! -f "$archive_key" ]; then
+  echo "[ubuntu] adding official 1Password repo..."
+  curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
+    | sudo gpg --dearmor -o "$archive_key"
+  echo "deb [arch=${arch} signed-by=${archive_key}] https://downloads.1password.com/linux/debian/${arch} stable main" \
+    | sudo tee "$repo_list" >/dev/null
+fi
+
+# Add debsig policy & key (for verifying standalone .deb installs too)
+if [ ! -f "${debsig_pol_dir}/1password.pol" ] || [ ! -f "${debsig_key_dir}/debsig.gpg" ]; then
+  echo "[ubuntu] installing debsig policy for 1Password..."
+  sudo mkdir -p "$debsig_pol_dir" "$debsig_key_dir"
+  curl -fsSL https://downloads.1password.com/linux/debian/debsig/1password.pol \
+    | sudo tee "${debsig_pol_dir}/1password.pol" >/dev/null
+  curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
+    | sudo gpg --dearmor -o "${debsig_key_dir}/debsig.gpg"
+fi
+
+echo "[ubuntu] updating apt and installing 1Password desktop + CLI..."
+sudo apt-get update -y
+sudo apt-get install -y 1password 1password-cli
+
+# Sanity checks
+echo "[ubuntu] verifying binaries..."
+command -v 1password >/dev/null && echo " - 1password: $(command -v 1password)"
+command -v op >/dev/null && echo " - op: $(command -v op)"
+echo "[ubuntu] versions:"
+1password --version || true
+op --version || true
+
+# --- prompt user to enable CLI integration -----------------------------------
+echo
+echo "[linux] Opening 1Password…"
+nohup 1password >/dev/null 2>&1 & disown || true
+echo "[linux] In 1Password: Settings → Developer → enable “Integrate with 1Password CLI”."
+echo "         Also make sure you’re signed in to your account(s) in the app and it’s unlocked."
+read -n 1 -s -r -p "[linux] Press any key when finished…"
+echo
+if op account list >/dev/null 2>&1; then
+  echo "[linux] ✅ 1Password CLI is integrated.
+else
+  echo "[linux] ⚠️  'op account list' didn’t succeed. 1Password CLI integration is necessary for machine setup."
+  exit 1
+fi

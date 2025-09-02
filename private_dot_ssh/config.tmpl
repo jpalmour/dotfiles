@@ -1,0 +1,24 @@
+# Global defaults
+Host *
+  ServerAliveInterval 60
+  ServerAliveCountMax 2
+{{- if eq .chezmoi.os "darwin" }}
+  UseKeychain yes
+  IdentityAgent ~/.1password/agent.sock
+{{- else if eq .chezmoi.os "linux" }}
+  IdentityAgent ~/.1password/agent.sock
+{{- end }}
+  # ForwardAgent can be handy if you hop hosts, but keep it off unless needed:
+  # ForwardAgent no
+  # StrictHostKeyChecking ask
+
+# --- Private host blocks from 1Password ---
+{{- $hostsItemTitle := (default "ssh-hosts") -}}
+{{- $hostsItem := onepasswordItemFields $hostsItemTitle -}}
+{{- $hosts := index $hostsItem "hosts" -}}
+{{- if not $hosts }}
+  # (No 'hosts' field found on 1Password item '{{ $hostsItemTitle }}'.)
+{{- else }}
+{{ $hosts | indent 0 }}
+{{- end }}
+

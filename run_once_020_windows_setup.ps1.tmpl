@@ -1,0 +1,88 @@
+# Ensure repos folder
+$repos = Join-Path $HOME "repos\github.com\jpalmour"
+New-Item -ItemType Directory -Force -Path $repos | Out-Null
+
+# --- Ensure winget (App Installer) is present ---------------------------------
+function Have-Cmd ($name) { $null -ne (Get-Command $name -ErrorAction SilentlyContinue) }
+
+if (-not (Have-Cmd winget)) {
+  Write-Host "[windows] winget not found — installing App Installer (MSIX) with deps..."
+
+  # Dependencies required for App Installer (winget)
+  $vclibsUrl = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
+  # Microsoft.UI.Xaml stable (2.8.x) direct package URL; update version if needed
+  $uiXamlUrl = "https://github.com/microsoft/microsoft-ui-xaml/releases/download/v2.8.6/Microsoft.UI.Xaml.2.8.x64.appx"
+
+  # Download latest DesktopAppInstaller msixbundle from GitHub releases
+  $release = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/winget-cli/releases/latest"
+  $msix = $release.assets | Where-Object { $_.name -match "DesktopAppInstaller_.*\.msixbundle$" } | Select-Object -First 1
+  if (-not $msix) { throw "Could not find DesktopAppInstaller msixbundle in latest winget-cli release." }
+
+  $tmp = New-Item -ItemType Directory -Force -Path (Join-Path $env:TEMP "winget-bootstrap")
+  $vclibs = Join-Path $tmp "Microsoft.VCLibs.x64.14.00.Desktop.appx"
+  $uixaml = Join-Path $tmp "Microsoft.UI.Xaml.2.8.x64.appx"
+  $appInstaller = Join-Path $tmp $msix.name
+
+  Invoke-WebRequest -UseBasicParsing -Uri $vclibsUrl -OutFile $vclibs
+  Invoke-WebRequest -UseBasicParsing -Uri $uiXamlUrl -OutFile $uixaml
+  Invoke-WebRequest -UseBasicParsing -Uri $msix.browser_download_url -OutFile $appInstaller
+
+  # Install dependencies then App Installer (must run in Windows PowerShell for Add-AppxPackage)
+  Add-AppxPackage $vclibs
+  Add-AppxPackage $uixaml
+  Add-AppxPackage $appInstaller
+
+  Write-Host "[windows] winget installed."
+}
+
+
+$ErrorActionPreference = "Stop"
+Write-Host "[windows] bootstrap starting..."
+
+# Ensure ~/repos/github.com/jpalmour (parity with other OSes)
+$repos = Join-Path $HOME "repos\github.com\jpalmour"
+New-Item -ItemType Directory -Force -Path $repos | Out-Null
+
+# Helper to install by exact ID (fails if not found; we don't guess)
+function Ensure-Winget ($id, $extraArgs = "") {
+  Write-Host "[winget] $id"
+  winget install -e --id $id --accept-source-agreements --accept-package-agreements --silent $extraArgs
+}
+
+# --- Core CLI tools
+Ensure-Winget "Git.Git"                                   # Git  :contentReference[oaicite:0]{index=0}
+Ensure-Winget "jqlang.jq"                                 # jq   :contentReference[oaicite:1]{index=1}
+Ensure-Winget "BurntSushi.ripgrep.MSVC"                   # ripgrep (MSVC build) :contentReference[oaicite:2]{index=2}
+Ensure-Winget "Vim.Vim"                                   # Vim  :contentReference[oaicite:5]{index=5}
+
+# --- PowerShell 7 (Core) ---
+Ensure-Winget "Microsoft.PowerShell"                      # PowerShell 7 stable       :contentReference[oaicite:6]{index=6}
+
+# --- Node via nvm-windows ---
+Ensure-Winget "CoreyButler.NVMforWindows"                 # nvm-windows               :contentReference[oaicite:7]{index=7}
+
+# Refresh PATH in this session so nvm/node are visible
+$machinePath = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+$userPath    = [System.Environment]::GetEnvironmentVariable("Path","User")
+$env:Path    = "$machinePath;$userPath"
+
+# Install and use latest LTS Node (idempotent)
+if (Have-Cmd nvm) {
+  Write-Host "[windows] ensuring Node LTS via nvm-windows..."
+  nvm install lts
+  nvm use lts
+} else {
+  Write-Warning "nvm command not found in this session; open a new terminal and run 'nvm install lts && nvm use lts'."
+}
+
+# --- GUI apps ---
+Ensure-Winget "Google.Chrome"                             # Chrome                    :contentReference[oaicite:8]{index=8}
+Ensure-Winget "SlackTechnologies.Slack"                   # Slack                     :contentReference[oaicite:9]{index=9}
+Ensure-Winget "AgileBits.1Password"                       # 1Password desktop         :contentReference[oaicite:10]{index=10}
+Ensure-Winget "AgileBits.1Password.CLI"                   # 1Password CLI (op)        :contentReference[oaicite:11]{index=11}
+Ensure-Winget "Docker.DockerDesktop"                      # Docker Desktop            :contentReference[oaicite:12]{index=12}
+Ensure-Winget "Microsoft.WindowsTerminal"                 # Windows Terminal          :contentReference[oaicite:13]{index=13}
+Ensure-Winget "GitHub.cli"                                # GitHub CLI
+Ensure-Winget "ghostty.ghostty"                           # Ghostty terminal
+
+Write-Host "[windows] bootstrap done ✅  (open a new terminal so PATH updates apply)"

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Installs 1Password desktop + CLI on macOS using Homebrew (preferred)
+# Falls back to official 1Password download URLs if brew is missing.
+set -euo pipefail
+
+has() { command -v "$1" >/dev/null 2>&1; }
+
+install_with_brew() {
+  echo "[macOS] installing via Homebrew…"
+  # Ensure Homebrew
+  if ! has brew; then
+    echo "[macOS] Homebrew not found; installing…"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # Add brew to PATH for the current shell (both Intel/ARM typical paths)
+    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
+    eval "$(/usr/local/bin/brew shellenv 2>/dev/null || true)"
+  fi
+
+  # Install desktop app (cask) + CLI (formula)
+  brew update
+  brew install --cask 1password || true
+  brew install 1password-cli || true
+}
+
+install_with_pkgs() {
+  echo "[macOS] installing via official pkgs…"
+  tmpdir="$(mktemp -d)"
+  pushd "$tmpdir" >/dev/null
+
+  # Desktop app
+  curl -fsSLo "1password.pkg" "https://downloads.1password.com/mac/1Password.pkg"
+  sudo installer -pkg "1password.pkg" -target /
+
+  # CLI
+  curl -fsSLo "op.zip" "https://cache.agilebits.com/dist/1P/op2/pkg/v2/op_darwin_amd64_v2.zip"
+  # Try arm64 first; if it 404s, we’ll keep amd64 Rosetta-compatible
+  if curl -fIsS "https://cache.agilebits.com/dist/1P/op2/pkg/v2/op_darwin_arm64_v2.zip" >/dev/null; then
+    curl -fsSLo "op_arm.zip" "https://cache.agilebits.com/dist/1P/op2/pkg/v2/op_darwin_arm64_v2.zip"
+    unzip -qo "op_arm.zip"
+  else
+    unzip -qo "op.zip"
+  fi
+  sudo install -m 0755 op /usr/local/bin/op || sudo install -m 0755 op /opt/homebrew/bin/op || true
+
+  popd >/dev/null
+  rm -rf "$tmpdir"
+}
+
+if has op && has 1password; then
+  echo "[macOS] 1Password CLI and app already present."
+else
+  if has brew; then install_with_brew; else install_with_pkgs; fi
+fi
+
+echo "[macOS] verifying…"
+command -v 1password && 1password --version || true
+command -v op && op --version || true
+
+
+# --- prompt user to enable CLI integration -----------------------------------
+echo
+echo "[macOS] Opening 1Password…"
+open -a "1Password" || true
+echo "[macOS] In 1Password: Settings → Developer → enable “Integrate with 1Password CLI”."
+echo "        (Optional) Settings → Security → enable “Unlock with Touch ID”."
+read -n 1 -s -r -p "[macOS] Press any key when finished…"
+echo
+if op account list >/dev/null 2>&1; then
+  echo "[macOS] ✅ 1Password CLI is integrated."
+else
+  echo "[macOS] ⚠️  'op account list' didn’t succeed. 1Password CLI integration is necessary for machine setup."
+  exit 0
+fi

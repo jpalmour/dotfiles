@@ -1,0 +1,81 @@
+# Requires PowerShell running as Administrator for winget/choco installs
+$ErrorActionPreference = 'Stop'
+
+function Test-Command { param([string]$Name) Get-Command $Name -ErrorAction SilentlyContinue | Out-Null }
+
+function Install-WithWinget {
+  Write-Host "[Windows] installing via winget…"
+  # Desktop app
+  winget install --id AgileBits.1Password --exact --silent --accept-source-agreements --accept-package-agreements
+  # CLI
+  winget install --id AgileBits.1Password.CLI --exact --silent --accept-source-agreements --accept-package-agreements
+}
+
+function Install-WithChoco {
+  Write-Host "[Windows] installing via Chocolatey…"
+  if (!(Test-Command choco)) {
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+  }
+  choco install -y 1password
+  choco install -y 1password-cli
+}
+
+# Skip if both present
+$opExists = Test-Command op
+$desktopExists = (Get-Item "C:\Program Files\1Password\1Password.exe" -ErrorAction SilentlyContinue) -ne $null `
+  -or (Get-Item "$env:LOCALAPPDATA\1Password\app\*\1Password.exe" -ErrorAction SilentlyContinue) -ne $null
+
+if ($opExists -and $desktopExists) {
+  Write-Host "[Windows] 1Password CLI and app already present."
+} else {
+  if (Test-Command winget) {
+    Install-WithWinget
+  } else {
+    Install-WithChoco
+  }
+}
+
+Write-Host "[Windows] verifying…"
+try { & "op" --version } catch {}
+try {
+  $paths = @(
+    "C:\Program Files\1Password\1Password.exe",
+    "$env:LOCALAPPDATA\1Password\app\*\1Password.exe"
+  )
+  $app = Get-ChildItem -Path $paths -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($app) { & "$($app.FullName)" --version 2>$null | Out-Null }
+} catch {}
+
+
+# --- prompt user to enable CLI integration -----------------------------------
+try {
+  Write-Host ""
+  Write-Host "[Windows] Opening 1Password…"
+  # Try common install locations; fallback to Start-Process with app name
+  $paths = @(
+    "$env:ProgramFiles\1Password\1Password.exe",
+    "$env:LOCALAPPDATA\1Password\app\*\1Password.exe"
+  )
+  $app = Get-ChildItem -Path $paths -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($app) { Start-Process -FilePath $app.FullName } else { Start-Process "1Password" -ErrorAction SilentlyContinue }
+
+  Write-Host "[Windows] In 1Password: Settings → Developer → enable 'Integrate with 1Password CLI'."
+  Write-Host "          (Optional) Settings → Security → enable Windows Hello for unlock."
+  Write-Host -NoNewline "[Windows] Press any key when finished…"
+  # any key (no echo)
+  $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+  Write-Host ""
+
+  try {
+    op account list *>$null
+    Write-Host "[Windows] ✅ 1Password CLI can see your accounts."
+  } catch {
+    Write-Host "[Windows] ⚠️  'op account list' didn’t succeed. 1Password integration is required for machine setup."
+    exit 1
+  }
+} catch {
+  Write-Host "[Windows] Skipping 1Password app setup prompt due to error: $($_.Exception.Message)"
+  exit 1
+}

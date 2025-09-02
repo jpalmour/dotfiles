@@ -1,0 +1,4 @@
+{{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
+{{- $pub := index $sshItem "Public Key" -}}
+{{- if not $pub }}{{ fail (printf "Could not read 'public key' from 1Password item %q" $title) }}{{ end }}
+{{ $pub }}
