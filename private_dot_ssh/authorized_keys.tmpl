@@ -8,11 +8,11 @@
   {{- end -}}
   {{- if eq $status "present" -}}
     {{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
-    {{- $pub := index $sshItem "Public Key" -}}
+    {{- $pub := index $sshItem "public key" -}}
     {{- if $pub -}}
 {{ $pub }}
     {{- else -}}
-# 1Password item 'Dev SSH Key' found but missing 'Public Key' field; skipping for now.
+# 1Password item 'Dev SSH Key' found but missing 'public key' field; skipping for now.
     {{- end -}}
   {{- else -}}
 # 1Password CLI present but item 'Dev SSH Key' not found; skipping for now.

@@ -18,12 +18,10 @@ The templates expect an SSH key item named exactly **"Dev SSH Key"** with a fiel
 
 ```bash
 # Generate a new SSH key and add it to 1Password
-# Replace your-email@example.com with your actual email
 op item create \
   --category "SSH Key" \
   --title "Dev SSH Key" \
-  --generate-password="ed25519" \
-  --ssh-generate-key="ed25519:your-email@example.com"
+  --ssh-generate-key ed25519
 ```
 
 **Alternative: If you have an existing SSH key:**
@@ -228,7 +226,7 @@ If you prefer to rotate manually:
 
 ```bash
 # Create new key with timestamp
-op item create --category "SSH Key" --title "Dev SSH Key" --generate-key ed25519 \
+op item create --category "SSH Key" --title "Dev SSH Key" --ssh-generate-key ed25519 \
   "Creation Date[text]=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" \
   "Purpose[text]=Development machine SSH authentication and Git signing"
 
@@ -238,6 +236,27 @@ op item get "Dev SSH Key" --fields "public key"
 # Add to GitHub twice (auth + signing)
 # Then run chezmoi apply to update configurations
 ```
+
+### Get More Verbose CLI Logs
+
+If key creation fails with unhelpful output, increase verbosity and run the command directly:
+
+```bash
+# Enable verbose logging
+export OP_LOG_LEVEL=debug   # or run with DEBUG=1 where supported
+
+# Re-run the key creation to capture detailed errors
+op item create \
+  --category "SSH Key" \
+  --title "Dev SSH Key" \
+  --ssh-generate-key ed25519
+```
+
+Common causes of failures:
+- 1Password app is locked or CLI not integrated (check: `op account list`)
+- SSH Agent not enabled in 1Password Settings → Developer
+- Insufficient account permissions to create SSH Key items
+- Using an older CLI (update and verify with `op --version`)
 
 ## Security Notes
 
