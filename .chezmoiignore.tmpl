@@ -1,7 +1,4 @@
-{{/* OS trees */}}
-{{ if ne .chezmoi.os "linux"  -}}010_ubuntu_setup.sh{{- end }}
-{{ if ne .chezmoi.os "darwin" -}}010_macos_setup.sh{{- end }}
-{{ if ne .chezmoi.os "windows" -}}010_windows_setup.ps1{{- end }}
+{{/* Note: OS-specific files are now handled below with run_once scripts */}}
 
 {{/* Profiles: .profile only for Linux */}}
 {{ if ne .chezmoi.os "linux" -}}dot_profile.tmpl{{- end }}
@@ -9,14 +6,22 @@
 {{/* zsh login profile: on Linux+macOS only */}}
 {{ if eq .chezmoi.os "windows" -}}dot_zprofile.tmpl{{- end }}
 
-{{/* Bootstrap entrypoints: pick the right one per OS */}}
+{{/* Bootstrap/Setup scripts: ignore wrong OS versions */}}
+{{ if ne .chezmoi.os "linux" -}}
+run_once_000_ubuntu_1pass_and_ssh_setup.sh.tmpl
+run_once_020_ubuntu_setup.sh.tmpl
+{{- end }}
+{{ if ne .chezmoi.os "darwin" -}}
+run_once_000_macos_1pass_and_ssh_setup.sh.tmpl
+run_once_020_macos_setup.sh.tmpl
+{{- end }}
 {{ if ne .chezmoi.os "windows" -}}
-000_bootstrap.ps1
-020_ai_tools_setup.ps1
+run_once_000_windows_1pass_and_ssh_setup.sh.tmpl
+run_once_020_windows_setup.ps1.tmpl
+run_once_030_ai_tools_setup.ps1.tmpl
 {{- end }}
 {{ if eq .chezmoi.os "windows" -}}
-000_bootstrap.sh
-020_ai_tools_setup.sh
+run_once_030_ai_tools_setup.sh.tmpl
 {{- end }}
 
 {{ if eq .chezmoi.os "windows" -}}

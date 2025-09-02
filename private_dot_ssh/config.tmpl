@@ -13,12 +13,25 @@ Host *
   # StrictHostKeyChecking ask
 
 # --- Private host blocks from 1Password ---
-{{- $hostsItemTitle := (default "ssh-hosts") -}}
+{{- if lookPath "op" }}
+{{- $hostsItemTitle := "ssh-hosts" -}}
 {{- $hostsItem := onepasswordItemFields $hostsItemTitle -}}
 {{- $hosts := index $hostsItem "hosts" -}}
 {{- if not $hosts }}
-  # (No 'hosts' field found on 1Password item '{{ $hostsItemTitle }}'.)
+# ⚠️  No 'hosts' field found on 1Password item 'ssh-hosts'
+# 
+# 📚 To create the SSH hosts configuration:
+#    op item create --category "Secure Note" --title "ssh-hosts" \
+#      "hosts=Host example
+#     HostName example.com
+#     User myuser"
+#
+# 🔍 To verify: op item get "ssh-hosts" --fields "hosts"
+# 📖 See 1PASS_SETUP.md for detailed instructions
 {{- else }}
 {{ $hosts | indent 0 }}
+{{- end }}
+{{- else }}
+# 1Password CLI not yet installed - host configs will be added after setup
 {{- end }}
 
