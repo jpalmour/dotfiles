@@ -161,6 +161,5 @@ try {
   exit 1
 }
 
-# Re-apply chezmoi now that 1Password CLI is available
-Write-Host "[Windows] Re-applying chezmoi templates with 1Password CLI available..."
-chezmoi apply
+# Note about re-applying chezmoi when 1Password was just installed
+Write-Host "[Windows] Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"

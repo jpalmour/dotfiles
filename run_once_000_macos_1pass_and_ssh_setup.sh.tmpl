@@ -154,6 +154,5 @@ else
   echo "[macOS] ✅ SSH hosts configuration found in 1Password."
 fi
 
-# Re-apply chezmoi now that 1Password CLI is available
-echo "[macOS] Re-applying chezmoi templates with 1Password CLI available..."
-chezmoi apply
+# Note about re-applying chezmoi when 1Password was just installed
+echo "[macOS] Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"
