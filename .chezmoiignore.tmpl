@@ -1,31 +1,31 @@
 {{/* Note: OS-specific files are now handled below with run_once scripts */}}
 
 {{/* Profiles: .profile only for Linux */}}
-{{ if ne .chezmoi.os "linux" -}}dot_profile{{- end }}
+{{ if ne .chezmoi.os "linux" -}}.profile{{- end }}
 
 {{/* zsh login profile: on Linux+macOS only */}}
-{{ if eq .chezmoi.os "windows" -}}dot_zprofile{{- end }}
+{{ if eq .chezmoi.os "windows" -}}.zprofile{{- end }}
 
 {{/* Bootstrap/Setup scripts: ignore wrong OS versions */}}
 {{ if ne .chezmoi.os "linux" -}}
-run_once_000_ubuntu_1pass_and_ssh_setup.sh
-run_once_020_ubuntu_setup.sh
+000_ubuntu_1pass_and_ssh_setup.sh
+020_ubuntu_setup.sh
 {{- end }}
 {{ if ne .chezmoi.os "darwin" -}}
-run_once_000_macos_1pass_and_ssh_setup.sh
-run_once_020_macos_setup.sh
+000_macos_1pass_and_ssh_setup.sh
+020_macos_setup.sh
 {{- end }}
 {{ if ne .chezmoi.os "windows" -}}
-run_once_000_windows_1pass_and_ssh_setup.sh
-run_once_020_windows_setup.ps1
-run_once_030_ai_tools_setup.ps1
+000_windows_1pass_and_ssh_setup.sh
+020_windows_setup.ps1
+030_ai_tools_setup.ps1
 {{- end }}
 {{ if eq .chezmoi.os "windows" -}}
-run_once_030_ai_tools_setup.sh
+030_ai_tools_setup.sh
 {{- end }}
 
 {{ if eq .chezmoi.os "windows" -}}
-executable_bin/termius-startup-picker.zsh
+bin/termius-startup-picker.zsh
 {{- end }}
 
 # Documentation files (not deployed to home directory)
