@@ -13,7 +13,7 @@ Host *
   # StrictHostKeyChecking ask
 
 # --- Private host blocks from 1Password ---
-{{- if lookPath "op" }}
+{{ if lookPath "op" }}
 {{- $hostsItemTitle := "ssh-hosts" -}}
 {{- /* Check for item existence without failing the template. */}}
 {{- $status := "" -}}
@@ -29,7 +29,15 @@ Host *
 # ⚠️  1Password item 'ssh-hosts' found but has no 'hosts' field
 # 📚 See 1PASS_SETUP.md for field format examples
   {{- else }}
+    {{- /* 'hosts' may be a string or a map (depending on 1Password item structure/CLI). */}}
+    {{- if kindIs "string" $hosts -}}
 {{ $hosts | indent 0 }}
+    {{- else if and (kindIs "map" $hosts) (hasKey $hosts "value") -}}
+{{ (index $hosts "value") | indent 0 }}
+    {{- else -}}
+# ⚠️ Unsupported 1Password 'hosts' field type: {{ kindOf $hosts }}
+# Expecting a plain text field named 'hosts'. See 1PASS_SETUP.md.
+    {{- end -}}
   {{- end }}
 {{- else }}
 # 1Password CLI present but item 'ssh-hosts' not found; skipping host blocks for now.
@@ -38,6 +46,6 @@ Host *
 # 🔍 Verify:
 #   op item get "ssh-hosts" --fields "hosts"
 {{- end }}
-{{- else }}
+{{ else }}
 # 1Password CLI not yet installed - host configs will be added after setup
 {{- end }}
