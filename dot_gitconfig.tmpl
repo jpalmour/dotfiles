@@ -1,31 +1,32 @@
-# --- Commit signing with SSH (via 1Password) ---
+{{- /* Commit signing with SSH (via 1Password) */}}
+{{- if lookPath "op" }}
+  {{- /* Only render signing config when op is available. */}}
+  {{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
+  {{- $pub := index $sshItem "Public Key" -}}
+  {{- if $pub }}
 [gpg]
     format = ssh
-{{- /* OS-specific path to op-ssh-sign */}}
-{{- if eq .chezmoi.os "darwin" }}
+    {{- /* OS-specific path to op-ssh-sign */}}
+    {{- if eq .chezmoi.os "darwin" }}
     ssh.program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-{{- else if eq .chezmoi.os "linux" }}
+    {{- else if eq .chezmoi.os "linux" }}
     ssh.program = /opt/1Password/op-ssh-sign
-{{- else if eq .chezmoi.os "windows" }}
+    {{- else if eq .chezmoi.os "windows" }}
     ssh.program = op-ssh-sign.exe
-{{- else }}
+    {{- else }}
     ssh.program = op-ssh-sign
-{{- end }}
+    {{- end }}
 
 [commit]
     gpgSign = true
 
-# Use the public key text from 1Password as the signing key
-{{- if lookPath "op" }}
-{{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
-{{- $pub := index $sshItem "Public Key" -}}
-{{- if not $pub }}{{ fail "❌ Could not read 'Public Key' field from 1Password item 'Dev SSH Key'.\n\n📚 Please follow the setup instructions in 1PASS_SETUP.md to create this item:\n   1. Run: op item create --category \"SSH Key\" --title \"Dev SSH Key\" --generate-password=\"ed25519\" --ssh-generate-key=\"ed25519:your-email@example.com\"\n   2. Add the public key to GitHub for both authentication and signing\n   3. Run 'chezmoi apply' again\n\n🔍 To verify the item exists: op item get \"Dev SSH Key\" --fields \"public key\"" }}{{ end }}
 [user]
     signingkey = {{ $pub }}
+  {{- else }}
+  # 1Password CLI present but 'Dev SSH Key' not found; skipping signing config.
+  {{- end }}
 {{- else }}
-# 1Password CLI not yet installed - signing key will be configured after setup
-[user]
-    signingkey = 
+# 1Password CLI not yet installed; skipping signing config for now.
 {{- end }}
 
 # --- Platform niceties ---
