@@ -45,7 +45,7 @@ op --version || true
 
 # --- prompt user to enable CLI integration and SSH agent --------------------
 echo
-echo "[linux] Opening 1Password…"
+echo "Opening 1Password…"
 nohup 1password >/dev/null 2>&1 & disown || true
 echo "[linux] In 1Password, please enable these settings:"
 echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"

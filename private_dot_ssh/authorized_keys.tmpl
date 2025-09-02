@@ -1,8 +1,22 @@
 {{- if lookPath "op" }}
-{{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
-{{- $pub := index $sshItem "Public Key" -}}
-{{- if not $pub }}{{ fail "❌ Could not read 'Public Key' field from 1Password item 'Dev SSH Key'.\n\n📚 Please follow the setup instructions in 1PASS_SETUP.md to create this item:\n   1. Run: op item create --category \"SSH Key\" --title \"Dev SSH Key\" --generate-password=\"ed25519\" --ssh-generate-key=\"ed25519:your-email@example.com\"\n   2. Add the public key to GitHub for both authentication and signing\n   3. Run 'chezmoi apply' again\n\n🔍 To verify the item exists: op item get \"Dev SSH Key\" --fields \"public key\"" }}{{ end }}
+  {{- /* Check for item existence without failing the template. */}}
+  {{- $status := "" -}}
+  {{- if eq .chezmoi.os "windows" -}}
+    {{- $status = (output "powershell" "-NoProfile" "-Command" "if (op item get \"Dev SSH Key\" --fields \"public key\" *> $null) { 'present' } else { 'missing' }") -}}
+  {{- else -}}
+    {{- $status = (trim (output "sh" "-c" "command -v op >/dev/null 2>&1 && op item get 'Dev SSH Key' --format json >/dev/null 2>&1 && echo present || echo missing")) -}}
+  {{- end -}}
+  {{- if eq $status "present" -}}
+    {{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
+    {{- $pub := index $sshItem "Public Key" -}}
+    {{- if $pub -}}
 {{ $pub }}
+    {{- else -}}
+# 1Password item 'Dev SSH Key' found but missing 'Public Key' field; skipping for now.
+    {{- end -}}
+  {{- else -}}
+# 1Password CLI present but item 'Dev SSH Key' not found; skipping for now.
+  {{- end -}}
 {{- else }}
 # 1Password CLI not yet installed - authorized keys will be configured after setup
 {{- end }}

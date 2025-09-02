@@ -15,23 +15,29 @@ Host *
 # --- Private host blocks from 1Password ---
 {{- if lookPath "op" }}
 {{- $hostsItemTitle := "ssh-hosts" -}}
-{{- $hostsItem := onepasswordItemFields $hostsItemTitle -}}
-{{- $hosts := index $hostsItem "hosts" -}}
-{{- if not $hosts }}
-# ⚠️  No 'hosts' field found on 1Password item 'ssh-hosts'
-# 
-# 📚 To create the SSH hosts configuration:
-#    op item create --category "Secure Note" --title "ssh-hosts" \
-#      "hosts=Host example
-#     HostName example.com
-#     User myuser"
-#
-# 🔍 To verify: op item get "ssh-hosts" --fields "hosts"
-# 📖 See 1PASS_SETUP.md for detailed instructions
-{{- else }}
+{{- /* Check for item existence without failing the template. */}}
+{{- $status := "" -}}
+{{- if eq .chezmoi.os "windows" -}}
+  {{- $status = (output "powershell" "-NoProfile" "-Command" "if (op item get \"ssh-hosts\" --fields \"hosts\" *> $null) { 'present' } else { 'missing' }") -}}
+{{- else -}}
+  {{- $status = (trim (output "sh" "-c" "command -v op >/dev/null 2>&1 && op item get 'ssh-hosts' --format json >/dev/null 2>&1 && echo present || echo missing")) -}}
+{{- end -}}
+{{- if eq $status "present" -}}
+  {{- $hostsItem := onepasswordItemFields $hostsItemTitle -}}
+  {{- $hosts := index $hostsItem "hosts" -}}
+  {{- if not $hosts }}
+# ⚠️  1Password item 'ssh-hosts' found but has no 'hosts' field
+# 📚 See 1PASS_SETUP.md for field format examples
+  {{- else }}
 {{ $hosts | indent 0 }}
+  {{- end }}
+{{- else }}
+# 1Password CLI present but item 'ssh-hosts' not found; skipping host blocks for now.
+# 📚 To create:
+#   op item create --category "Secure Note" --title "ssh-hosts" "hosts=..."
+# 🔍 Verify:
+#   op item get "ssh-hosts" --fields "hosts"
 {{- end }}
 {{- else }}
 # 1Password CLI not yet installed - host configs will be added after setup
 {{- end }}
-
