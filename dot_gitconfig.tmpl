@@ -1,26 +1,14 @@
-{{- /* Commit signing with SSH (via 1Password) */}}
 {{- if lookPath "op" }}
-  {{- /* Only render signing config when op is available. */}}
-  {{- /* Determine if the 1Password item exists without failing the template. */}}
-  {{- $status := "" -}}
-  {{- if eq .chezmoi.os "windows" -}}
-    {{- $status = (output "powershell" "-NoProfile" "-Command" "if (op item get \"Dev SSH Key\" --fields \"public key\" *> $null) { 'present' } else { 'missing' }") -}}
-  {{- else -}}
-    {{- $status = (trim (output "sh" "-c" "command -v op >/dev/null 2>&1 && op item get 'Dev SSH Key' --format json >/dev/null 2>&1 && echo present || echo missing")) -}}
-  {{- end -}}
-  {{- if eq $status "present" -}}
-    {{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
-    {{- $pub := index $sshItem "Public Key" -}}
-    {{- if $pub }}
 [gpg]
     format = ssh
-    {{- /* OS-specific path to op-ssh-sign */}}
+
+[gpg "ssh"]
     {{- if eq .chezmoi.os "darwin" }}
-    ssh.program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
+    program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
     {{- else if eq .chezmoi.os "linux" }}
-    ssh.program = /opt/1Password/op-ssh-sign
+    program = /opt/1Password/op-ssh-sign
     {{- else if eq .chezmoi.os "windows" }}
-    ssh.program = op-ssh-sign.exe
+    program = op-ssh-sign.exe
     {{- else }}
     ssh.program = op-ssh-sign
     {{- end }}
@@ -29,15 +17,9 @@
     gpgSign = true
 
 [user]
-    signingkey = {{ $pub }}
-    {{- else }}
-  # 1Password CLI found but 'Dev SSH Key' missing 'Public Key' field; skipping signing config.
-    {{- end }}
-  {{- else }}
-  # 1Password CLI present but item 'Dev SSH Key' not found; skipping signing config for now.
-  {{- end -}}
+    signingkey = {{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}
 {{- else }}
-# 1Password CLI not yet installed; skipping signing config for now.
+# 1Password CLI not installed - signing config will be available after 1Password is configured
 {{- end }}
 
 # --- Platform niceties ---

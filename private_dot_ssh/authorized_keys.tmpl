@@ -1,22 +1,5 @@
 {{- if lookPath "op" }}
-  {{- /* Check for item existence without failing the template. */}}
-  {{- $status := "" -}}
-  {{- if eq .chezmoi.os "windows" -}}
-    {{- $status = (output "powershell" "-NoProfile" "-Command" "if (op item get \"Dev SSH Key\" --fields \"public key\" *> $null) { 'present' } else { 'missing' }") -}}
-  {{- else -}}
-    {{- $status = (trim (output "sh" "-c" "command -v op >/dev/null 2>&1 && op item get 'Dev SSH Key' --format json >/dev/null 2>&1 && echo present || echo missing")) -}}
-  {{- end -}}
-  {{- if eq $status "present" -}}
-    {{- $sshItem := onepasswordItemFields "Dev SSH Key" -}}
-    {{- $pub := index $sshItem "public key" -}}
-    {{- if $pub -}}
-{{ $pub }}
-    {{- else -}}
-# 1Password item 'Dev SSH Key' found but missing 'public key' field; skipping for now.
-    {{- end -}}
-  {{- else -}}
-# 1Password CLI present but item 'Dev SSH Key' not found; skipping for now.
-  {{- end -}}
+{{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}
 {{- else }}
-# 1Password CLI not yet installed - authorized keys will be configured after setup
+# 1Password CLI not installed - authorized keys will be configured after 1Password is configured
 {{- end }}
