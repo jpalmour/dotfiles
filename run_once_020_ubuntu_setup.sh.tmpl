@@ -1,67 +1,46 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[ubuntu] bootstrap starting..."
+echo " bootstrap starting..."
 
 # --- Refresh & base toolchain -------------------------------------------------
-echo "[ubuntu] apt update/upgrade"
+echo " apt update/upgrade"
 sudo apt-get update -y
 sudo apt-get upgrade -y
 
-echo "[ubuntu] base CLI tools"
+echo " base CLI tools"
 sudo apt-get install -y \
   git curl wget vim tmux tree jq ripgrep \
   ca-certificates gnupg lsb-release build-essential apt-transport-https
 
-# --- Zsh + oh-my-zsh ----------------------------------------------------------
+# --- Zsh ----------------------------------------------------------
 if ! command -v zsh >/dev/null 2>&1; then
-  echo "[ubuntu] installing zsh..."
+  echo " installing zsh..."
   sudo apt-get install -y zsh
-fi
-
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  echo "[ubuntu] installing oh-my-zsh..."
-  RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
 # Set zsh as the default shell if not already
 if [ "$(getent passwd "$USER" | awk -F: '{print $7}')" != "$(command -v zsh)" ]; then
-  echo "[ubuntu] setting default shell to zsh..."
+  echo " setting default shell to zsh..."
   sudo chsh -s "$(command -v zsh)" "$USER" || true
 fi
 
-# --- Visual Studio Code (Microsoft apt repo) ----------------------------------
-if ! command -v code >/dev/null 2>&1; then
-  echo "[ubuntu] installing Visual Studio Code..."
-  wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
-  sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/packages.microsoft.gpg
-  echo "deb [arch=$(dpkg --print-architecture)] https://packages.microsoft.com/repos/code stable main" \
-  | sudo tee /etc/apt/sources.list.d/vscode.list >/dev/null
-  rm -f packages.microsoft.gpg
-  sudo apt-get update -y
-  sudo apt-get install -y code
-fi
-
-# --- Google Chrome (official .deb) -------------------------------------------
-if ! command -v google-chrome >/dev/null 2>&1; then
-  echo "[ubuntu] installing Google Chrome..."
-  cd /tmp
-  curl -fsSLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  # If you're on arm64, swap to chromium or aarch64 build as needed.
-  sudo apt-get install -y ./google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
-  rm -f google-chrome-stable_current_amd64.deb
-fi
-
-# --- Slack (via Snap) ---------------------------------------------------------
-if ! command -v slack >/dev/null 2>&1; then
-  echo "[ubuntu] installing Slack via Snap..."
-  sudo snap install slack --classic
-fi
+# --- Snap packages ------------------------------------------------------------
+echo " installing Snap packages..."
+# VS Code
+sudo snap install code --classic
+# Chrome (using Chromium as it's the Snap-native browser)
+sudo snap install chromium
+# Slack
+sudo snap install slack --classic
+# GitHub CLI
+sudo snap install gh
+# Ghostty
+sudo snap install ghostty --classic
 
 # --- Docker Engine (official apt repo) ---------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
-  echo "[ubuntu] installing Docker Engine..."
+  echo " installing Docker Engine..."
   sudo apt-get remove -y docker docker-engine docker.io containerd runc || true
   sudo install -m 0755 -d /etc/apt/keyrings
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
@@ -76,20 +55,12 @@ https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME} stable" \
   sudo usermod -aG docker "$USER" || true
 fi
 
-# --- Snap packages (GitHub CLI, Ghostty) -------------------------------------
-echo "[ubuntu] installing Snap packages..."
-if ! command -v gh >/dev/null 2>&1; then
-  sudo snap install gh
-fi
-if ! command -v ghostty >/dev/null 2>&1; then
-  sudo snap install ghostty --classic
-fi
 
 # nvm install (nounset-safe wrapper)
 install_nvm_and_node() {
   # Install nvm if missing
   if [ ! -d "$HOME/.nvm" ]; then
-    echo "[ubuntu] installing nvm..."
+    echo " installing nvm..."
     # nvm official install (quiet-ish)
     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
   fi
@@ -107,7 +78,7 @@ install_nvm_and_node() {
   [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
   # Now it’s safe to run nvm commands
-  echo "[ubuntu] installing latest LTS Node via nvm..."
+  echo " installing latest LTS Node via nvm..."
   nvm install --lts
   nvm alias default 'lts/*'
 
@@ -118,5 +89,5 @@ install_nvm_and_node() {
 install_nvm_and_node
 
 
-echo "[ubuntu] bootstrap done ✅  (log out/in to use docker without sudo)"
+echo " bootstrap done ✅  (log out/in to use docker without sudo)"
 

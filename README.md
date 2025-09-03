@@ -13,9 +13,17 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ## Daily Usage
 
 - **Pull latest changes**: `chezmoi update`
-- **Navigae to source dir to edit files**: `chezmoi cd`
+- **Navigate to source dir to edit files**: `chezmoi cd`
 - **See what would change**: `chezmoi diff`
 - **Apply changes**: `chezmoi apply`
+
+## External Dependencies
+
+This repository uses `.chezmoiexternal.toml` to manage external dependencies like oh-my-zsh, plugins, and themes.
+
+- **Initial setup**: After the first `chezmoi apply`, external files are downloaded automatically
+- **Update externals**: Run `chezmoi --refresh-externals apply` to fetch the latest versions of external dependencies (respects the refresh period set in `.chezmoiexternal.toml`)
+- **Note**: Regular `chezmoi apply` uses cached versions and only refreshes when the period expires (currently set to 168 hours/1 week)
 
 ## Repository Structure
 

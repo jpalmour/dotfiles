@@ -6,10 +6,10 @@ set -euo pipefail
 has() { command -v "$1" >/dev/null 2>&1; }
 
 install_with_brew() {
-  echo "[macOS] installing via Homebrew…"
+  echo " installing via Homebrew…"
   # Ensure Homebrew
   if ! has brew; then
-    echo "[macOS] Homebrew not found; installing…"
+    echo " Homebrew not found; installing…"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     # Add brew to PATH for the current shell (both Intel/ARM typical paths)
     eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
@@ -23,7 +23,7 @@ install_with_brew() {
 }
 
 install_with_pkgs() {
-  echo "[macOS] installing via official pkgs…"
+  echo " installing via official pkgs…"
   tmpdir="$(mktemp -d)"
   pushd "$tmpdir" >/dev/null
 
@@ -47,43 +47,43 @@ install_with_pkgs() {
 }
 
 if has op && has 1password; then
-  echo "[macOS] 1Password CLI and app already present."
+  echo " 1Password CLI and app already present."
 else
   if has brew; then install_with_brew; else install_with_pkgs; fi
 fi
 
-echo "[macOS] verifying…"
+echo " verifying…"
 command -v 1password && 1password --version || true
 command -v op && op --version || true
 
 
 # --- prompt user to enable CLI integration and SSH agent --------------------
 echo
-echo "[macOS] Opening 1Password…"
+echo " Opening 1Password…"
 open -a "1Password" || true
-echo "[macOS] In 1Password, please enable these settings:"
+echo " In 1Password, please enable these settings:"
 echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
 echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
 echo "  3. (Optional) Settings → Security → ✅ 'Unlock with Touch ID'"
 echo
-read -n 1 -s -r -p "[macOS] Press any key when finished…"
+read -n 1 -s -r -p " Press any key when finished…"
 echo
 if op account list >/dev/null 2>&1; then
-  echo "[macOS] ✅ 1Password CLI is integrated."
+  echo " ✅ 1Password CLI is integrated."
 else
-  echo "[macOS] ⚠️  'op account list' didn't succeed. 1Password CLI integration is necessary for machine setup."
+  echo " ⚠️  'op account list' didn't succeed. 1Password CLI integration is necessary for machine setup."
   exit 1
 fi
 
 # Check for SSH key and offer to create if missing
-echo "[macOS] Checking for SSH key in 1Password..."
+echo " Checking for SSH key in 1Password..."
 if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
-  echo "[macOS] ⚠️  SSH key 'Dev SSH Key' not found in 1Password."
+  echo " ⚠️  SSH key 'Dev SSH Key' not found in 1Password."
   echo
-  read -p "[macOS] Would you like to create a new SSH key now? (y/N): " -n 1 -r
+  read -p " Would you like to create a new SSH key now? (y/N): " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "[macOS] Creating new Ed25519 SSH key..."
+    echo " Creating new Ed25519 SSH key..."
     
     # Create SSH key with metadata including creation date
     creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
@@ -95,43 +95,43 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
       "Purpose[text]=Development machine SSH authentication and Git signing" \
       >/dev/null 2>&1; then
       
-      echo "[macOS] ✅ SSH key created successfully!"
+      echo " ✅ SSH key created successfully!"
       echo
-      echo "[macOS] 🔑 Public key for GitHub:"
+      echo " 🔑 Public key for GitHub:"
       echo "========================================================================="
       op item get "Dev SSH Key" --fields "public key"
       echo "========================================================================="
       echo
-      echo "[macOS] 📋 Next steps - Add this key to GitHub TWICE:"
+      echo " 📋 Next steps - Add this key to GitHub TWICE:"
       echo "  1. Go to https://github.com/settings/keys"
       echo "  2. Click 'New SSH key' → Add as 'Authentication Key'"
       echo "  3. Click 'New SSH key' again → Add as 'Signing Key'"
       echo
-      read -n 1 -s -r -p "[macOS] Press any key after adding the key to GitHub (both auth & signing)..."
+      read -n 1 -s -r -p " Press any key after adding the key to GitHub (both auth & signing)..."
       echo
     else
-      echo "[macOS] ❌ Failed to create SSH key. Please create it manually:"
-      echo "[macOS] Run: op item create --category \"SSH Key\" --title \"Dev SSH Key\" --ssh-generate-key ed25519"
+      echo " ❌ Failed to create SSH key. Please create it manually:"
+      echo " Run: op item create --category \"SSH Key\" --title \"Dev SSH Key\" --ssh-generate-key ed25519"
     fi
   else
-    echo "[macOS] Skipping SSH key creation. You can create it manually later."
-    echo "[macOS] See 1PASS_SETUP.md for instructions."
+    echo " Skipping SSH key creation. You can create it manually later."
+    echo " See 1PASS_SETUP.md for instructions."
   fi
 else
-  echo "[macOS] ✅ SSH key 'Dev SSH Key' found in 1Password."
+  echo " ✅ SSH key 'Dev SSH Key' found in 1Password."
   # Show key age if it has creation date metadata
   creation_date=$(op item get "Dev SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
   if [ -n "$creation_date" ]; then
-    echo "[macOS]    Created: ${creation_date}"
+    echo "    Created: ${creation_date}"
   fi
 fi
 
 # Check for ssh-hosts and offer to create if missing
-echo "[macOS] Checking for SSH hosts configuration..."
+echo " Checking for SSH hosts configuration..."
 if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
-  echo "[macOS] ⚠️  SSH hosts configuration 'ssh-hosts' not found."
+  echo " ⚠️  SSH hosts configuration 'ssh-hosts' not found."
   echo
-  read -p "[macOS] Would you like to create it now? (y/N): " -n 1 -r
+  read -p " Would you like to create it now? (y/N): " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Create basic ssh-hosts configuration
@@ -145,14 +145,14 @@ if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
 #     User myuser
 #     Port 22" \
       >/dev/null 2>&1; then
-      echo "[macOS] ✅ SSH hosts configuration created with template."
+      echo " ✅ SSH hosts configuration created with template."
     else
-      echo "[macOS] ❌ Failed to create SSH hosts configuration."
+      echo " ❌ Failed to create SSH hosts configuration."
     fi
   fi
 else
-  echo "[macOS] ✅ SSH hosts configuration found in 1Password."
+  echo " ✅ SSH hosts configuration found in 1Password."
 fi
 
 # Note about re-applying chezmoi when 1Password was just installed
-echo "[macOS] Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"
+echo " Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"

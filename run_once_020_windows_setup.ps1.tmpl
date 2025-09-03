@@ -6,7 +6,7 @@ New-Item -ItemType Directory -Force -Path $repos | Out-Null
 function Have-Cmd ($name) { $null -ne (Get-Command $name -ErrorAction SilentlyContinue) }
 
 if (-not (Have-Cmd winget)) {
-  Write-Host "[windows] winget not found — installing App Installer (MSIX) with deps..."
+  Write-Host " winget not found — installing App Installer (MSIX) with deps..."
 
   # Dependencies required for App Installer (winget)
   $vclibsUrl = "https://aka.ms/Microsoft.VCLibs.x64.14.00.Desktop.appx"
@@ -32,12 +32,12 @@ if (-not (Have-Cmd winget)) {
   Add-AppxPackage $uixaml
   Add-AppxPackage $appInstaller
 
-  Write-Host "[windows] winget installed."
+  Write-Host " winget installed."
 }
 
 
 $ErrorActionPreference = "Stop"
-Write-Host "[windows] bootstrap starting..."
+Write-Host " bootstrap starting..."
 
 # Ensure ~/repos/github.com/jpalmour (parity with other OSes)
 $repos = Join-Path $HOME "repos\github.com\jpalmour"
@@ -45,7 +45,7 @@ New-Item -ItemType Directory -Force -Path $repos | Out-Null
 
 # Helper to install by exact ID (fails if not found; we don't guess)
 function Ensure-Winget ($id, $extraArgs = "") {
-  Write-Host "[winget] $id"
+  Write-Host "Installing $id..."
   winget install -e --id $id --accept-source-agreements --accept-package-agreements --silent $extraArgs
 }
 
@@ -68,7 +68,7 @@ $env:Path    = "$machinePath;$userPath"
 
 # Install and use latest LTS Node (idempotent)
 if (Have-Cmd nvm) {
-  Write-Host "[windows] ensuring Node LTS via nvm-windows..."
+  Write-Host " ensuring Node LTS via nvm-windows..."
   nvm install lts
   nvm use lts
 } else {
@@ -85,4 +85,4 @@ Ensure-Winget "Microsoft.WindowsTerminal"                 # Windows Terminal    
 Ensure-Winget "GitHub.cli"                                # GitHub CLI
 Ensure-Winget "ghostty.ghostty"                           # Ghostty terminal
 
-Write-Host "[windows] bootstrap done ✅  (open a new terminal so PATH updates apply)"
+Write-Host " bootstrap done ✅  (open a new terminal so PATH updates apply)"

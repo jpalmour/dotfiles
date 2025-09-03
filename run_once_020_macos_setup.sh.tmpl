@@ -1,19 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[macos] bootstrap starting..."
-
-# --- Ensure Homebrew is installed ---
-if ! command -v brew >/dev/null 2>&1; then
-  echo "[macos] installing Homebrew..."
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  # make sure brew is on PATH
-  eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
-  eval "$(/usr/local/bin/brew shellenv)" 2>/dev/null || true
-fi
+echo " bootstrap starting..."
 
 # --- Base CLI tools
-echo "[macos] installing base CLI tools..."
+echo " installing base CLI tools..."
 brew install \
   git \
   curl \
@@ -30,25 +21,17 @@ brew install \
 
 # --- Zsh ---
 if ! command -v zsh >/dev/null 2>&1; then
-  echo "[macos] installing zsh..."
+  echo " installing zsh..."
   brew install zsh
 fi
-
-# oh-my-zsh (same shared logic, embedded here for single-pass bootstrap)
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  echo "[macos] installing oh-my-zsh..."
-  RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-fi
-
 # Make zsh default shell
 if [ "$SHELL" != "$(command -v zsh)" ]; then
-  echo "[macos] setting default shell to zsh..."
+  echo " setting default shell to zsh..."
   chsh -s "$(command -v zsh)"
 fi
 
 # --- GUI apps (brew cask) matching your Ubuntu list ---
-echo "[macos] installing GUI apps (casks)..."
+echo " installing GUI apps (casks)..."
 brew install --cask \
   visual-studio-code \
   google-chrome \
@@ -58,7 +41,7 @@ brew install --cask \
   ghostty
 
 # --- Developer/AI tools ---
-echo "[macos] installing developer/AI tools..."
+echo " installing developer/AI tools..."
 
 # nvm (via brew, simpler than curl script here)
 if ! command -v nvm >/dev/null 2>&1; then
@@ -72,5 +55,5 @@ export NVM_DIR="$HOME/.nvm"
 EOF
 fi
 
-echo "[macos] bootstrap done ✅"
+echo " bootstrap done ✅"
 
