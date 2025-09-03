@@ -10,22 +10,10 @@ Install chezmoi and apply dotfiles in one command:
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ```
 
-## Manual Setup
-
-1. Install chezmoi:
-   ```bash
-   sh -c "$(curl -fsLS get.chezmoi.io)"
-   ```
-
-2. Initialize and apply dotfiles:
-   ```bash
-   chezmoi init --apply jpalmour
-   ```
-
 ## Daily Usage
 
 - **Pull latest changes**: `chezmoi update`
-- **Edit a file**: `chezmoi edit ~/.zshrc`
+- **Navigae to source dir to edit files**: `chezmoi cd`
 - **See what would change**: `chezmoi diff`
 - **Apply changes**: `chezmoi apply`
 
@@ -34,4 +22,3 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 - Supports Linux, macOS, and Windows
 - Uses `.chezmoiignore` for OS-specific file management
 - Template files (`.tmpl`) for machine-specific configurations
-- See `CLAUDE.md` for detailed development guidelines
