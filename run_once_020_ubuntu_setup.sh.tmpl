@@ -11,7 +11,21 @@ sudo apt-get upgrade -y
 echo " base CLI tools"
 sudo apt-get install -y \
   git curl wget vim tmux tree jq ripgrep \
-  ca-certificates gnupg lsb-release build-essential apt-transport-https
+  ca-certificates gnupg lsb-release build-essential apt-transport-https \
+  openssh-server
+
+# --- SSH Server setup ---------------------------------------------------------
+if command -v systemctl >/dev/null 2>&1; then
+  echo " configuring SSH server..."
+  # Enable and start SSH service
+  sudo systemctl enable ssh
+  sudo systemctl start ssh
+  
+  # Configure firewall if ufw is installed
+  if command -v ufw >/dev/null 2>&1; then
+    sudo ufw allow ssh
+  fi
+fi
 
 # --- Zsh ----------------------------------------------------------
 if ! command -v zsh >/dev/null 2>&1; then

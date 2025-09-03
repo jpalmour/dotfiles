@@ -19,6 +19,10 @@ brew install \
   make \
   gh
 
+# --- SSH Server setup ---
+echo " enabling SSH server (Remote Login)..."
+sudo systemsetup -setremotelogin on
+
 # --- Zsh ---
 if ! command -v zsh >/dev/null 2>&1; then
   echo " installing zsh..."
