@@ -1,58 +1,34 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-arch="$(dpkg --print-architecture)"
-repo_list="/etc/apt/sources.list.d/1password.list"
-archive_key="/usr/share/keyrings/1password-archive-keyring.gpg"
-debsig_pol_dir="/etc/debsig/policies/AC2D62742012EA22"
-debsig_key_dir="/usr/share/debsig/keyrings/AC2D62742012EA22"
-
-ensure_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "Missing $1"; exit 1; }; }
-ensure_cmd curl
-ensure_cmd gpg
-ensure_cmd sudo
-
-# Add official repo (once)
-if [ ! -f "$repo_list" ] || [ ! -f "$archive_key" ]; then
-  echo " adding official 1Password repo..."
-  curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
-    | sudo gpg --dearmor -o "$archive_key"
-  echo "deb [arch=${arch} signed-by=${archive_key}] https://downloads.1password.com/linux/debian/${arch} stable main" \
-    | sudo tee "$repo_list" >/dev/null
+#!/bin/sh
+set -e
+# ensure brew is in PATH
+if [ -x /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+else
+  echo "Homebrew is required" >&2
+  exit 1
+fi
+if ! command -v 1password >/dev/null 2>&1; then
+    brew install --cask 1password
+fi
+if ! command -v op >/dev/null 2>&1; then
+    brew install 1password-cli
 fi
 
-# Add debsig policy & key (for verifying standalone .deb installs too)
-if [ ! -f "${debsig_pol_dir}/1password.pol" ] || [ ! -f "${debsig_key_dir}/debsig.gpg" ]; then
-  echo " installing debsig policy for 1Password..."
-  sudo mkdir -p "$debsig_pol_dir" "$debsig_key_dir"
-  curl -fsSL https://downloads.1password.com/linux/debian/debsig/1password.pol \
-    | sudo tee "${debsig_pol_dir}/1password.pol" >/dev/null
-  curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
-    | sudo gpg --dearmor -o "${debsig_key_dir}/debsig.gpg"
-fi
-
-echo " updating apt and installing 1Password desktop + CLI..."
-sudo apt-get update -y
-sudo apt-get install -y 1password 1password-cli
-
-# Sanity checks
-echo " verifying binaries..."
-command -v 1password >/dev/null && echo " - 1password: $(command -v 1password)"
-command -v op >/dev/null && echo " - op: $(command -v op)"
-echo " versions:"
-1password --version || true
-op --version || true
+# Verify versions
+command -v 1password && 1password --version || true
+command -v op && op --version || true
 
 # --- prompt user to enable CLI integration and SSH agent --------------------
 echo
-echo "Opening 1Password…"
-nohup 1password >/dev/null 2>&1 & disown || true
+echo " Opening 1Password…"
+open -a "1Password" || true
 echo " In 1Password, please enable these settings:"
 echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
 echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
-echo "  3. Make sure you're signed in and the app is unlocked"
 echo
-read -n 1 -s -r -p " Press any key when finished…"
+read -n 1 -s -r -p " Press any key when finished..."
 echo
 if op account list >/dev/null 2>&1; then
   echo " ✅ 1Password CLI is integrated."
@@ -70,8 +46,6 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo " Creating new Ed25519 SSH key..."
-    
-    # Create SSH key with metadata including creation date
     creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
     if op item create \
       --category "SSH Key" \
@@ -80,7 +54,7 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
       "Creation Date[text]=${creation_date}" \
       "Purpose[text]=Development machine SSH authentication and Git signing" \
       >/dev/null 2>&1; then
-      
+
       echo " ✅ SSH key created successfully!"
       echo
       echo " 🔑 Public key for GitHub:"
@@ -105,7 +79,6 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
   fi
 else
   echo " ✅ SSH key 'Dev SSH Key' found in 1Password."
-  # Show key age if it has creation date metadata
   creation_date=$(op item get "Dev SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
   if [ -n "$creation_date" ]; then
     echo "    Created: ${creation_date}"
@@ -120,7 +93,6 @@ if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
   read -p " Would you like to create it now? (y/N): " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    # Create basic ssh-hosts configuration
     if op item create \
       --category "Secure Note" \
       --title "ssh-hosts" \
@@ -139,15 +111,3 @@ if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
 else
   echo " ✅ SSH hosts configuration found in 1Password."
 fi
-
-# Enable 1Password autostart if service file exists (created on first run, enabled on second)
-if [ -f ~/.config/systemd/user/1password.service ]; then
-  echo " Enabling 1Password to start automatically..."
-  systemctl --user daemon-reload
-  systemctl --user enable 1password.service
-  systemctl --user start 1password.service || true
-  echo " ✅ 1Password service enabled for autostart."
-fi
-
-# Note about re-applying chezmoi when 1Password was just installed
-echo " Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"

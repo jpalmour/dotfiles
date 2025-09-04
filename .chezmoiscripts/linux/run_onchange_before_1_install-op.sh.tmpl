@@ -1,72 +1,38 @@
-#!/usr/bin/env bash
-# Installs 1Password desktop + CLI on macOS using Homebrew (preferred)
-# Falls back to official 1Password download URLs if brew is missing.
-set -euo pipefail
+#!/bin/sh
+set -e
+curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+    sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
 
-has() { command -v "$1" >/dev/null 2>&1; }
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" |
+    sudo tee /etc/apt/sources.list.d/1password.list
 
-install_with_brew() {
-  echo " installing via Homebrew…"
-  # Ensure Homebrew
-  if ! has brew; then
-    echo " Homebrew not found; installing…"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    # Add brew to PATH for the current shell (both Intel/ARM typical paths)
-    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || true)"
-    eval "$(/usr/local/bin/brew shellenv 2>/dev/null || true)"
-  fi
+sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
+curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | \
+    sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
+sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+    sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
 
-  # Install desktop app (cask) + CLI (formula)
-  brew update
-  brew install --cask 1password || true
-  brew install 1password-cli || true
-}
+sudo apt update && sudo apt install -y 1password 1password-cli
 
-install_with_pkgs() {
-  echo " installing via official pkgs…"
-  tmpdir="$(mktemp -d)"
-  pushd "$tmpdir" >/dev/null
-
-  # Desktop app
-  curl -fsSLo "1password.pkg" "https://downloads.1password.com/mac/1Password.pkg"
-  sudo installer -pkg "1password.pkg" -target /
-
-  # CLI
-  curl -fsSLo "op.zip" "https://cache.agilebits.com/dist/1P/op2/pkg/v2/op_darwin_amd64_v2.zip"
-  # Try arm64 first; if it 404s, we’ll keep amd64 Rosetta-compatible
-  if curl -fIsS "https://cache.agilebits.com/dist/1P/op2/pkg/v2/op_darwin_arm64_v2.zip" >/dev/null; then
-    curl -fsSLo "op_arm.zip" "https://cache.agilebits.com/dist/1P/op2/pkg/v2/op_darwin_arm64_v2.zip"
-    unzip -qo "op_arm.zip"
-  else
-    unzip -qo "op.zip"
-  fi
-  sudo install -m 0755 op /usr/local/bin/op || sudo install -m 0755 op /opt/homebrew/bin/op || true
-
-  popd >/dev/null
-  rm -rf "$tmpdir"
-}
-
-if has op && has 1password; then
-  echo " 1Password CLI and app already present."
-else
-  if has brew; then install_with_brew; else install_with_pkgs; fi
-fi
-
-echo " verifying…"
-command -v 1password && 1password --version || true
-command -v op && op --version || true
-
+# Sanity checks
+echo " verifying binaries..."
+command -v 1password >/dev/null && echo " - 1password: $(command -v 1password)"
+command -v op >/dev/null && echo " - op: $(command -v op)"
+echo " versions:"
+1password --version || true
+op --version || true
 
 # --- prompt user to enable CLI integration and SSH agent --------------------
 echo
-echo " Opening 1Password…"
-open -a "1Password" || true
+echo "Opening 1Password…"
+nohup 1password >/dev/null 2>&1 & disown || true
 echo " In 1Password, please enable these settings:"
 echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
 echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
-echo "  3. (Optional) Settings → Security → ✅ 'Unlock with Touch ID'"
+echo "  3. Make sure you're signed in and the app is unlocked"
 echo
-read -n 1 -s -r -p " Press any key when finished…"
+read -n 1 -s -r -p " Press any key when finished..."
 echo
 if op account list >/dev/null 2>&1; then
   echo " ✅ 1Password CLI is integrated."
@@ -84,7 +50,7 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo " Creating new Ed25519 SSH key..."
-    
+
     # Create SSH key with metadata including creation date
     creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
     if op item create \
@@ -94,7 +60,7 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
       "Creation Date[text]=${creation_date}" \
       "Purpose[text]=Development machine SSH authentication and Git signing" \
       >/dev/null 2>&1; then
-      
+
       echo " ✅ SSH key created successfully!"
       echo
       echo " 🔑 Public key for GitHub:"
@@ -153,6 +119,3 @@ if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
 else
   echo " ✅ SSH hosts configuration found in 1Password."
 fi
-
-# Note about re-applying chezmoi when 1Password was just installed
-echo " Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"

@@ -1,59 +1,30 @@
-# Requires PowerShell running as Administrator for winget/choco installs
 $ErrorActionPreference = 'Stop'
 
 function Test-Command { param([string]$Name) Get-Command $Name -ErrorAction SilentlyContinue | Out-Null }
 
-function Install-WithWinget {
-  Write-Host " installing via winget…"
-  # Desktop app
-  winget install --id AgileBits.1Password --exact --silent --accept-source-agreements --accept-package-agreements
-  # CLI
-  winget install --id AgileBits.1Password.CLI --exact --silent --accept-source-agreements --accept-package-agreements
-}
-
-function Install-WithChoco {
-  Write-Host " installing via Chocolatey…"
-  if (!(Test-Command choco)) {
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-  }
-  choco install -y 1password
-  choco install -y 1password-cli
-}
-
-# Skip if both present
 $opExists = Test-Command op
-$desktopExists = (Get-Item "C:\Program Files\1Password\1Password.exe" -ErrorAction SilentlyContinue) -ne $null `
-  -or (Get-Item "$env:LOCALAPPDATA\1Password\app\*\1Password.exe" -ErrorAction SilentlyContinue) -ne $null
+$desktopExists = (Get-Item "C:\\Program Files\\1Password\\1Password.exe" -ErrorAction SilentlyContinue) -ne $null -or \
+                 (Get-Item "$env:LOCALAPPDATA\\1Password\\app\\*\\1Password.exe" -ErrorAction SilentlyContinue) -ne $null
 
-if ($opExists -and $desktopExists) {
-  Write-Host " 1Password CLI and app already present."
-} else {
-  if (Test-Command winget) {
-    Install-WithWinget
-  } else {
-    Install-WithChoco
-  }
+if (-not $opExists -or -not $desktopExists) {
+    if (Test-Command winget) {
+        winget install -e --id AgileBits.1Password --accept-source-agreements --accept-package-agreements --silent
+        winget install -e --id AgileBits.1Password.CLI --accept-source-agreements --accept-package-agreements --silent
+    } else {
+        if (-not (Test-Command choco)) {
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+            Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+        }
+        choco install -y 1password
+        choco install -y 1password-cli
+    }
 }
 
-Write-Host " verifying…"
-try { & "op" --version } catch {}
-try {
-  $paths = @(
-    "C:\Program Files\1Password\1Password.exe",
-    "$env:LOCALAPPDATA\1Password\app\*\1Password.exe"
-  )
-  $app = Get-ChildItem -Path $paths -ErrorAction SilentlyContinue | Select-Object -First 1
-  if ($app) { & "$($app.FullName)" --version 2>$null | Out-Null }
-} catch {}
-
-
-# --- prompt user to enable CLI integration -----------------------------------
+# --- prompt user to enable CLI integration and SSH agent --------------------
 try {
   Write-Host ""
   Write-Host " Opening 1Password…"
-  # Try common install locations; fallback to Start-Process with app name
   $paths = @(
     "$env:ProgramFiles\1Password\1Password.exe",
     "$env:LOCALAPPDATA\1Password\app\*\1Password.exe"
@@ -64,10 +35,8 @@ try {
   Write-Host " In 1Password, please enable these settings:"
   Write-Host "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
   Write-Host "  2. Settings → Developer → ✅ 'Use the SSH agent'"
-  Write-Host "  3. (Optional) Settings → Security → ✅ 'Windows Hello for unlock'"
   Write-Host ""
-  Write-Host -NoNewline " Press any key when finished…"
-  # any key (no echo)
+  Write-Host -NoNewline " Press any key when finished..."
   $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
   Write-Host ""
 
@@ -78,18 +47,15 @@ try {
     Write-Host " ⚠️  'op account list' didn't succeed. 1Password integration is required for machine setup."
     exit 1
   }
-  
+
   # Check for SSH key and offer to create if missing
   Write-Host " Checking for SSH key in 1Password..."
   try {
     op item get "Dev SSH Key" --fields "public key" *>$null
     Write-Host " ✅ SSH key 'Dev SSH Key' found in 1Password."
-    # Show key age if it has creation date metadata
     try {
       $creationDate = op item get "Dev SSH Key" --fields "Creation Date" 2>$null
-      if ($creationDate) {
-        Write-Host "    Created: $creationDate"
-      }
+      if ($creationDate) { Write-Host "    Created: $creationDate" }
     } catch {}
   } catch {
     Write-Host " ⚠️  SSH key 'Dev SSH Key' not found in 1Password."
@@ -97,12 +63,9 @@ try {
     $createKey = Read-Host " Would you like to create a new SSH key now? (y/N)"
     if ($createKey -match "^[Yy]$") {
       Write-Host " Creating new Ed25519 SSH key..."
-      
-      # Create SSH key with metadata including creation date
       $creationDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
       try {
         op item create --category "SSH Key" --title "Dev SSH Key" --ssh-generate-key ed25519 "Creation Date[text]=$creationDate" "Purpose[text]=Development machine SSH authentication and Git signing" *>$null
-        
         Write-Host " ✅ SSH key created successfully!"
         Write-Host ""
         Write-Host " 🔑 Public key for GitHub:"
@@ -127,7 +90,7 @@ try {
       Write-Host " See 1PASS_SETUP.md for instructions."
     }
   }
-  
+
   # Check for ssh-hosts and offer to create if missing
   Write-Host " Checking for SSH hosts configuration..."
   try {
@@ -138,7 +101,6 @@ try {
     Write-Host ""
     $createHosts = Read-Host " Would you like to create it now? (y/N)"
     if ($createHosts -match "^[Yy]$") {
-      # Create basic ssh-hosts configuration
       $hostsTemplate = @"
 # Add your custom SSH host configurations here
 # Example:
@@ -155,11 +117,7 @@ try {
       }
     }
   }
-  
 } catch {
   Write-Host " Skipping 1Password app setup prompt due to error: $($_.Exception.Message)"
   exit 1
 }
-
-# Note about re-applying chezmoi when 1Password was just installed
-Write-Host " Note: if 1pass was not installed before this command you will need to reapply to complete machine setup"

@@ -4,7 +4,8 @@ set -euo pipefail
 # Load nvm
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
+  nvm use --lts
 fi
 
-# Install/upgrade tools
+# Install/upgrade AI CLI tools
 npm install -g @openai/codex @anthropic-ai/claude-code @google/gemini-cli

@@ -1,0 +1,20 @@
+$ErrorActionPreference = 'Stop'
+
+$packages = @(
+    "AgileBits.1Password"
+    "BurntSushi.ripgrep.MSVC"
+    "Docker.DockerDesktop"
+    "Git.Git"
+    "GitHub.cli"
+    "Google.Chrome"
+    "Microsoft.PowerShell"
+    "Microsoft.WindowsTerminal"
+    "SlackTechnologies.Slack"
+    "Vim.Vim"
+    "ghostty.ghostty"
+    "jqlang.jq"
+)
+
+foreach ($pkg in ($packages | Sort-Object -Unique)) {
+    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+}

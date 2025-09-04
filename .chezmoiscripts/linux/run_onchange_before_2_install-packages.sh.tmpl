@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -eufo pipefail
+
+{{ $packages := list 
+    "apt-transport-https"
+    "build-essential"
+    "ca-certificates"
+    "curl"
+    "git"
+    "gnupg"
+    "jq"
+    "lsb-release"
+    "openssh-server"
+    "ripgrep"
+    "tmux"
+    "tree"
+    "vim"
+    "wget"
+    "zsh" -}}
+{{ $snaps := list "chromium" "gh" -}}
+{{ $classicSnaps := list "code" "ghostty" "slack" -}}
+
+sudo apt-get update
+sudo apt-get install -y {{ $packages | join " " }}
+
+if command -v snap >/dev/null 2>&1; then
+{{ range $snaps -}}
+  ( snap info {{ . }} | grep -q ^installed: ) || sudo snap install {{ . }}
+{{ end -}}
+{{ range $classicSnaps -}}
+  ( snap info {{ . }} | grep -q ^installed: ) || sudo snap install --classic {{ . }}
+{{ end -}}
+fi
