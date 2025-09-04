@@ -1,4 +1,3 @@
-{{ if eq .chezmoi.os "windows" -}}
 $ErrorActionPreference = 'Stop'
 
 function Test-Command { param([string]$Name) Get-Command $Name -ErrorAction SilentlyContinue | Out-Null }
@@ -122,4 +121,3 @@ try {
   Write-Host " Skipping 1Password app setup prompt due to error: $($_.Exception.Message)"
   exit 1
 }
-{{ end -}}
