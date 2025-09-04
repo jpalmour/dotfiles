@@ -1,0 +1,8 @@
+$ErrorActionPreference = 'Stop'
+
+if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) {
+    winget install -e --id CoreyButler.NVMforWindows --accept-source-agreements --accept-package-agreements --silent
+}
+
+nvm install lts
+nvm use lts

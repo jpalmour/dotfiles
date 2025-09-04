@@ -4,6 +4,7 @@ set -euo pipefail
 # Load nvm
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
+  nvm use --lts
 fi
 
 # Install/upgrade AI CLI tools

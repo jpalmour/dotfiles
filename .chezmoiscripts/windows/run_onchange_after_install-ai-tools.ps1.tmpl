@@ -1,9 +1,5 @@
 $ErrorActionPreference = "Stop"
 Write-Output "Installing/upgrading AI CLI tools via npm..."
 
-. "$HOME/.nvm/nvm.sh"
-
-nvm install --lts
-nvm use --lts
-
+nvm use lts
 npm install -g @openai/codex @anthropic-ai/claude-code @google/gemini-cli
