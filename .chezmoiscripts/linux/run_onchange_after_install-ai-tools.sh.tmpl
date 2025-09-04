@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Load nvm
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
+# Install/upgrade AI CLI tools
+npm install -g @openai/codex @anthropic-ai/claude-code @google/gemini-cli
