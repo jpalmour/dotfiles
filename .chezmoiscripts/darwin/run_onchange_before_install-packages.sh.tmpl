@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -eufo pipefail
+
+{{ $brews := list 
+    "coreutils"
+    "curl"
+    "gh"
+    "git"
+    "gnu-sed"
+    "jq"
+    "make"
+    "ripgrep"
+    "tmux"
+    "tree"
+    "vim"
+    "wget"
+    "zsh" -}}
+{{ $casks := list 
+    "1password"
+    "docker"
+    "ghostty"
+    "google-chrome"
+    "slack"
+    "visual-studio-code" -}}
+
+brew bundle --file=/dev/stdin <<'EOBREW'
+{{ range ($brews | sortAlpha | uniq) -}}
+brew "{{ . }}"
+{{ end -}}
+{{ range ($casks | sortAlpha | uniq) -}}
+cask "{{ . }}"
+{{ end -}}
+EOBREW

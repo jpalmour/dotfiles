@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "darwin" -}}
+#!/bin/sh
+set -e
+if ! command -v op >/dev/null 2>&1; then
+    brew install 1password-cli
+fi
+{{ end -}}

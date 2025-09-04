@@ -1,0 +1,6 @@
+{{ if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+if (-not (Get-Command op -ErrorAction SilentlyContinue)) {
+    winget install -e --id AgileBits.1Password.CLI --accept-source-agreements --accept-package-agreements --silent
+}
+{{ end -}}
