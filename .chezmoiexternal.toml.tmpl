@@ -1,4 +1,4 @@
-{{ if not (and (hasKey . "ephemeral") (index . "ephemeral")) }}
+{{ if ne .chezmoi.os "windows" }}
 
 [".oh-my-zsh"]
     type = "archive"

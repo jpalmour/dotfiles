@@ -30,4 +30,4 @@
 
 [user]
     name = Joseph Palmour
-    email = {{ if and (hasKey . "is_work_machine") (index . "is_work_machine") (ne (get . "work_email" | default "") ``) -}}{{ get . "work_email" | default "" }}{{- else -}}{{ get . "personal_email" | default "" }}{{- end }}
+    email = {{ if and .is_work_machine (ne .work_email ``) -}}{{ .work_email }}{{- else -}}{{ .personal_email }}{{- end }}
