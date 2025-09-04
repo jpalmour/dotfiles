@@ -1,6 +1,15 @@
 {{ if eq .chezmoi.os "darwin" -}}
 #!/bin/sh
 set -e
+# ensure brew is in PATH
+if [ -x /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+else
+  echo "Homebrew is required" >&2
+  exit 1
+fi
 if ! command -v 1password >/dev/null 2>&1; then
     brew install --cask 1password
 fi
