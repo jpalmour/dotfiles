@@ -8,14 +8,20 @@
 .oh-my-zsh/templates/**
 .oh-my-zsh/custom/themes/powerlevel10k/**/*.zwc
 
-{{/* Profiles: .profile only for Linux */}}
-{{ if ne .chezmoi.os "linux" -}}.profile{{- end }}
+{{ if ne .chezmoi.os "darwin" }}
+.chezmoiscripts/darwin/**
+{{ end }}
 
-{{/* zsh login profile: on Linux+macOS only */}}
-{{ if eq .chezmoi.os "windows" -}}.zprofile{{- end }}
+{{ if ne .chezmoi.os "linux" -}}
+.chezmoiscripts/linux/**
+.profile
+{{- end }}
 
 {{ if eq .chezmoi.os "windows" -}}
 bin/termius-startup-picker.zsh
+.zprofile
+{{ else }}
+.chezmoiscripts/windows/**
 {{- end }}
 
 # Documentation files (not deployed to home directory)
