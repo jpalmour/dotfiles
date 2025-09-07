@@ -17,7 +17,11 @@ COMPLETION_WAITING_DOTS="true"
 
 # Plugins can be found in ~/.oh-my-zsh/plugins/*
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-plugins=(git docker npm tmux zsh-syntax-highlighting{{if eq .chezmoi.os "darwin"}} brew{{end}})
+{{- $plugins := .zshPlugins -}}
+{{- if eq .chezmoi.os "darwin" -}}
+{{-   $plugins = append $plugins "brew" -}}
+{{- end -}}
+plugins=({{ $plugins | join " " }})
 
 source $ZSH/oh-my-zsh.sh
 

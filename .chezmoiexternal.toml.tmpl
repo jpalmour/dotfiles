@@ -12,6 +12,7 @@
         "*/themes",
     ]
 
+{{ if has .zshPlugins "zsh-syntax-highlighting" }}
 [".oh-my-zsh/custom/plugins/zsh-syntax-highlighting"]
     type = "archive"
     url = "https://github.com/zsh-users/zsh-syntax-highlighting/archive/master.tar.gz"
@@ -24,6 +25,7 @@
         "*/.github",
         "*/.gitignore",
     ]
+{{ end }}
 
 [".oh-my-zsh/custom/themes/powerlevel10k"]
     type = "archive"
