@@ -1,0 +1,71 @@
+name: Validate Chezmoi Setup
+
+on: [pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4 # Use a more recent version of the checkout action
+
+      - name: Install chezmoi
+        run: |
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /usr/local/bin
+
+      - name: Setup mock 1Password CLI
+        run: |
+          mkdir -p $HOME/bin
+          cat <<'EOF' > $HOME/bin/op
+          #!/bin/sh
+          set -e
+
+          # For 'op read op://...'
+          if [ "$1" = "read" ]; then
+            if [ "$2" = "op://Private/Dev SSH Key/public_key" ]; then
+              echo "ssh-ed25519 AAAA... mock-key"
+              exit 0
+            elif [ "$2" = "op://Private/ssh-hosts/hosts" ]; then
+              echo "Host *\n  IdentityFile ~/.ssh/id_ed25519"
+              exit 0
+            else
+              echo "op: unknown read URI: $2" >&2
+              exit 1
+            fi
+          fi
+
+          # For 'op item get ...'
+          if [ "$1" = "item" ] && [ "$2" = "get" ]; then
+              if [ "$3" = "Dev SSH Key" ]; then
+                  echo "ssh-ed25519 AAAA... mock-key"
+                  exit 0
+              elif [ "$3" = "ssh-hosts" ]; then
+                  echo "Host *\n  IdentityFile ~/.ssh/id_ed25519"
+                  exit 0
+              else
+                  # Allow other item get calls to succeed without output
+                  exit 0
+              fi
+          fi
+
+          # For other commands like 'op account list' or 'op --version'
+          # Just exit successfully without output, as the scripts only check the exit code.
+          exit 0
+          EOF
+          chmod +x $HOME/bin/op
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Run chezmoi init
+        run: |
+          mkdir -p ~/.config/chezmoi
+          cat <<EOF > ~/.config/chezmoi/chezmoi.toml
+          [data]
+            is_work_machine = false
+            personal_email = "test@example.com"
+            work_email = "work@example.com"
+          EOF
+          chezmoi init --source $(pwd)
+
+      - name: Run chezmoi apply
+        run: |
+          chezmoi apply -v
