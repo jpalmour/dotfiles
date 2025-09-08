@@ -57,14 +57,7 @@ jobs:
 
       - name: Run chezmoi init
         run: |
-          mkdir -p ~/.config/chezmoi
-          cat <<EOF > ~/.config/chezmoi/chezmoi.toml
-          [data]
-            is_work_machine = false
-            personal_email = "test@example.com"
-            work_email = "work@example.com"
-          EOF
-          chezmoi init --source $(pwd)
+          chezmoi init --source $(pwd) --data '{"is_work_machine":false,"personal_email":"test@example.com","work_email":"work@example.com"}'
 
       - name: Run chezmoi apply
         run: |
