@@ -57,7 +57,10 @@ jobs:
 
       - name: Run chezmoi init
         run: |
-          chezmoi init --source $(pwd) --data '{"is_work_machine":false,"personal_email":"test@example.com","work_email":"work@example.com"}'
+          chezmoi init --source . --no-tty \
+            --promptString 'Personal email (for global git, SSH key comment)=test@example.com' \
+            --promptString 'Work email (leave blank if none)=' \
+            --promptBool 'Is this a WORK machine? (y/N)=false'
 
       - name: Run chezmoi apply
         run: |
