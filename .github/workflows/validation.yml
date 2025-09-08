@@ -1,0 +1,57 @@
+name: Validation
+
+on:
+  pull_request:
+
+jobs:
+  validate-chezmoi:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install chezmoi
+        run: |
+          sh -c "$(curl -fsLS get.chezmoi.io)" -- -b /usr/local/bin
+
+      - name: Create mock 1Password CLI
+        run: |
+          sudo tee /usr/local/bin/op > /dev/null <<'EOF'
+          #!/bin/bash
+          set -euo pipefail
+          if [[ "$*" == "read op://private/id_ed25519/private key" ]]; then
+            echo "mock_private_key"
+          elif [[ "$*" == "read op://private/id_ed25519/public key" ]]; then
+            echo "mock_public_key"
+          elif [[ "$*" == "read op://private/dotfiles-git-user/username" ]]; then
+            echo "mock_user"
+          elif [[ "$*" == "read op://private/dotfiles-git-user/email" ]]; then
+            echo "test@example.com"
+          else
+            echo "unexpected op call: $*" >&2
+            exit 1
+          fi
+          EOF
+          sudo chmod +x /usr/local/bin/op
+
+      - name: Prepare for non-interactive apply
+        run: |
+          # The root cause of failure is the config template which contains interactive prompts.
+          # We solve this by replacing the template with a static config file in the source dir.
+          rm .chezmoi.toml.tmpl
+          cat > .chezmoi.toml <<'EOF'
+          [data]
+              personal_email = "test@example.com"
+              personal_is_work_laptop = false
+          EOF
+
+      - name: Simulate initialized state and run apply
+        run: |
+          # Per user suggestion, simulate the state after `chezmoi init` by symlinking
+          # the default source directory to our (now modified) checkout.
+          mkdir -p ~/.local/share
+          ln -s "$(pwd)" ~/.local/share/chezmoi
+
+          # With the symlink in place and the interactive template removed, `apply`
+          # will work non-interactively.
+          chezmoi apply --exclude=scripts --no-tty
