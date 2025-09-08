@@ -1,10 +1,12 @@
-!.oh-my-zsh/plugins
-{{ range .zshPlugins }}
+# Ignore all oh-my-zsh plugins by default...
+.oh-my-zsh/plugins/**
+
+# ...but explicitly un-ignore the ones in our list.
+{{- range .zshPlugins }}
 !.oh-my-zsh/plugins/{{ . }}
 !.oh-my-zsh/plugins/{{ . }}/**
 {{- end }}
 .oh-my-zsh/cache/**
-.oh-my-zsh/plugins/**
 .oh-my-zsh/templates/**
 .oh-my-zsh/custom/themes/powerlevel10k/**/*.zwc
 
