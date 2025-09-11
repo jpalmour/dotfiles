@@ -22,9 +22,9 @@
 
 [user]
     {{- if .is_wsl -}}
-    signingkey = {{ output "op.exe" "read" "--no-newline" "op://Private/Dev SSH Key/public_key" }}
+    signingkey = {{ if .is_work_machine }}{{ output "op.exe" "read" "--no-newline" "op://Private/Work SSH Key/public_key" }}{{ else }}{{ output "op.exe" "read" "--no-newline" "op://Private/Dev SSH Key/public_key" }}{{ end }}
     {{- else -}}
-    signingkey = {{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}
+    signingkey = {{ if .is_work_machine -}}{{ onepasswordRead "op://Private/Work SSH Key/public_key" }}{{- else -}}{{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}{{- end }}
     {{- end }}
 {{- else }}
 # 1Password CLI not installed - signing config will be available after 1Password is configured

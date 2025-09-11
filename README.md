@@ -17,6 +17,16 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 - **See what would change**: `chezmoi diff`
 - **Apply changes**: `chezmoi apply`
 
+## Multiple GitHub Accounts
+
+- **Work machines (`.is_work_machine == true`)**:
+  - `github.com` uses your Work SSH key by default.
+  - For personal repositories, clone using the `github-personal.com` host alias:
+    ```bash
+    git clone git@github-personal.com:username/repository.git
+    ```
+- **Non-work machines**: use the standard `github.com` SSH URL for all repositories.
+
 ## External Dependencies
 
 This repository uses `.chezmoiexternal.toml` to manage external dependencies like oh-my-zsh, plugins, and themes.

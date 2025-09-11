@@ -102,12 +102,26 @@ try {
     $createHosts = Read-Host " Would you like to create it now? (y/N)"
     if ($createHosts -match "^[Yy]$") {
       $hostsTemplate = @"
+{{- if .is_work_machine -}}
+Host github.com
+    HostName github.com
+    User git
+    IdentitiesOnly yes
+    IdentityFile "op://Private/Work SSH Key/private key"
+
+Host github-personal.com
+    HostName github.com
+    User git
+    IdentitiesOnly yes
+    IdentityFile "op://Private/Dev SSH Key/private key"
+{{- else -}}
 # Add your custom SSH host configurations here
 # Example:
 # Host myserver
 #     HostName 192.168.1.100
 #     User myuser
 #     Port 22
+{{- end }}
 "@
       try {
         op item create --category "Secure Note" --title "ssh-hosts" "hosts=$hostsTemplate" *>$null
@@ -117,6 +131,50 @@ try {
       }
     }
   }
+
+  # Create WORK SSH Key if missing (work machines only)
+  {{- if .is_work_machine }}
+  Write-Host " Checking for WORK SSH key in 1Password..."
+  try {
+    op item get "Work SSH Key" --fields "public key" *>$null
+    Write-Host " ✅ WORK SSH key 'Work SSH Key' found in 1Password."
+    try {
+      $creationDate = op item get "Work SSH Key" --fields "Creation Date" 2>$null
+      if ($creationDate) { Write-Host "    Created: $creationDate" }
+    } catch {}
+  } catch {
+    Write-Host " ⚠️  SSH key 'Work SSH Key' not found in 1Password."
+    Write-Host ""
+    $createKey = Read-Host " Would you like to create a new WORK SSH key now? (y/N)"
+    if ($createKey -match "^[Yy]$") {
+      Write-Host " Creating new Ed25519 WORK SSH key..."
+      $creationDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
+      try {
+        op item create --category "SSH Key" --title "Work SSH Key" --ssh-generate-key ed25519 "Creation Date[text]=$creationDate" "Purpose[text]=Work machine SSH authentication and Git signing" *>$null
+        Write-Host " ✅ Work SSH key created successfully!"
+        Write-Host ""
+        Write-Host " 🔑 Public key for GitHub (WORK):"
+        Write-Host "========================================================================="
+        op item get "Work SSH Key" --fields "public key"
+        Write-Host "========================================================================="
+        Write-Host ""
+        Write-Host " 📋 Next steps - Add this WORK key to GitHub TWICE (work account):"
+        Write-Host "  1. Go to https://github.com/settings/keys"
+        Write-Host "  2. Click 'New SSH key' → Add as 'Authentication Key'"
+        Write-Host "  3. Click 'New SSH key' again → Add as 'Signing Key'"
+        Write-Host ""
+        Write-Host -NoNewline " Press any key after adding the WORK key to GitHub (both auth & signing)..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        Write-Host ""
+      } catch {
+        Write-Host " ❌ Failed to create WORK SSH key. Please create it manually:"
+        Write-Host " Run: op item create --category `"SSH Key`" --title `"Work SSH Key`" --ssh-generate-key ed25519"
+      }
+    } else {
+      Write-Host " Skipping WORK SSH key creation. You can create it manually later."
+    }
+  }
+  {{- end }}
 } catch {
   Write-Host " Skipping 1Password app setup prompt due to error: $($_.Exception.Message)"
   exit 1

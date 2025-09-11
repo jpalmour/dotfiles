@@ -193,3 +193,55 @@ if ! "${OP_BIN}" item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
 else
   echo " ✅ SSH hosts configuration found in 1Password."
 fi
+
+{{- if .is_work_machine }}
+
+# Check for WORK SSH key and offer to create if missing
+echo " Checking for WORK SSH key in 1Password..."
+if ! "${OP_BIN}" item get "Work SSH Key" --fields "public key" >/dev/null 2>&1; then
+  echo " ⚠️  SSH key 'Work SSH Key' not found in 1Password."
+  echo
+  read -p " Would you like to create a new WORK SSH key now? (y/N): " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo " Creating new Ed25519 WORK SSH key..."
+
+    creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+    if "${OP_BIN}" item create \
+      --category "SSH Key" \
+      --title "Work SSH Key" \
+      --ssh-generate-key ed25519 \
+      "Creation Date[text]=${creation_date}" \
+      "Purpose[text]=Work machine SSH authentication and Git signing" \
+      >/dev/null 2>&1; then
+
+      echo " ✅ Work SSH key created successfully!"
+      echo
+      echo " 🔑 Public key for GitHub (WORK):"
+      echo "========================================================================="
+      "${OP_BIN}" item get "Work SSH Key" --fields "public key"
+      echo "========================================================================="
+      echo
+      echo " 📋 Next steps - Add this WORK key to GitHub TWICE (work account):"
+      echo "  1. Go to https://github.com/settings/keys"
+      echo "  2. Click 'New SSH key' → Add as 'Authentication Key'"
+      echo "  3. Click 'New SSH key' again → Add as 'Signing Key'"
+      echo
+      read -n 1 -s -r -p " Press any key after adding the WORK key to GitHub (both auth & signing)..."
+      echo
+    else
+      echo " ❌ Failed to create WORK SSH key. Please create it manually:"
+      echo " Run: ${OP_BIN} item create --category \"SSH Key\" --title \"Work SSH Key\" --ssh-generate-key ed25519"
+    fi
+  else
+    echo " Skipping WORK SSH key creation. You can create it manually later."
+  fi
+else
+  echo " ✅ WORK SSH key 'Work SSH Key' found in 1Password."
+  creation_date=$("${OP_BIN}" item get "Work SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
+  if [ -n "$creation_date" ]; then
+    echo "    Created: ${creation_date}"
+  fi
+fi
+
+{{- end }}

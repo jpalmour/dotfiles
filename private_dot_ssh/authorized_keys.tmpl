@@ -1,3 +1,7 @@
-{{- if lookPath "op" }}
+{{- if or (and .is_wsl (lookPath "op.exe")) (and (not .is_wsl) (lookPath "op")) }}
+{{-   if .is_wsl -}}
+{{ output "op.exe" "read" "op://Private/Dev SSH Key/public_key" }}
+{{-   else -}}
 {{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}
+{{-   end -}}
 {{- end }}

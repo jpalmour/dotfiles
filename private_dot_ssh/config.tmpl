@@ -8,9 +8,28 @@ Host *
   IdentityAgent ~/.1password/agent.sock
 {{- end }}
 
+# --- GitHub hosts (only on work machines) ---
+{{- if .is_work_machine }}
+Host github.com
+  HostName github.com
+  User git
+  IdentitiesOnly yes
+  IdentityFile "op://Private/Work SSH Key/private key"
+
+Host github-personal.com
+  HostName github.com
+  User git
+  IdentitiesOnly yes
+  IdentityFile "op://Private/Dev SSH Key/private key"
+{{- end }}
+
 # --- Private host blocks from 1Password ---
-{{- if lookPath "op" }}
+{{- if or (and .is_wsl (lookPath "op.exe")) (and (not .is_wsl) (lookPath "op")) }}
+{{-   if .is_wsl -}}
+{{ output "op.exe" "read" "op://Private/ssh-hosts/hosts" }}
+{{-   else -}}
 {{ onepasswordRead "op://Private/ssh-hosts/hosts" }}
+{{-   end -}}
 {{- else }}
 # 1Password CLI not installed - host configs will be added after 1Password is configured
 {{- end }}
