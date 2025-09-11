@@ -1,5 +1,3 @@
 {{- if lookPath "op" }}
 {{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}
-{{- else }}
-# 1Password CLI not installed - authorized keys will be configured after 1Password is configured
 {{- end }}

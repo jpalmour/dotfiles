@@ -1,49 +1,123 @@
-#!/bin/sh
+#!/bin/bash
 set -e
-curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
-    sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
 
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/$(dpkg --print-architecture) stable main" |
-    sudo tee /etc/apt/sources.list.d/1password.list
+# -----------------------------------------------------------------------------
+# Idempotent setup for 1Password apt repo, keyrings and packages
+# -----------------------------------------------------------------------------
 
+# Select 1Password CLI binary depending on environment
+{{- if .is_wsl }}
+OP_BIN="op.exe"
+{{- else }}
+OP_BIN="op"
+{{- end }}
+
+{{- if not .is_wsl }}
+# Ensure keyring exists and is up to date (no interactive overwrite)
+KEYRING_PATH=/usr/share/keyrings/1password-archive-keyring.gpg
+TMP_ASC=$(mktemp)
+curl -sS https://downloads.1password.com/linux/keys/1password.asc -o "$TMP_ASC"
+
+if [ ! -f "$KEYRING_PATH" ]; then
+    gpg --dearmor --output /tmp/1password-archive-keyring.gpg "$TMP_ASC"
+    sudo install -m 0644 /tmp/1password-archive-keyring.gpg "$KEYRING_PATH"
+    rm -f /tmp/1password-archive-keyring.gpg
+    NEED_APT_UPDATE=1
+else
+    gpg --dearmor --output /tmp/1password-archive-keyring.gpg "$TMP_ASC"
+    if ! sudo cmp -s /tmp/1password-archive-keyring.gpg "$KEYRING_PATH"; then
+        sudo install -m 0644 /tmp/1password-archive-keyring.gpg "$KEYRING_PATH"
+        NEED_APT_UPDATE=1
+    fi
+    rm -f /tmp/1password-archive-keyring.gpg
+fi
+rm -f "$TMP_ASC"
+
+# Ensure apt source list is present and correct
+ARCH=$(dpkg --print-architecture)
+LIST_LINE="deb [arch=${ARCH} signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/${ARCH} stable main"
+LIST_PATH=/etc/apt/sources.list.d/1password.list
+if [ ! -f "$LIST_PATH" ] || ! grep -Fxq "$LIST_LINE" "$LIST_PATH"; then
+    echo "$LIST_LINE" | sudo tee "$LIST_PATH" >/dev/null
+    NEED_APT_UPDATE=1
+fi
+
+# Ensure debsig policy and keyring exist
 sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
-curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | \
-    sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol
-sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
-curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
-    sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+POLICY_PATH=/etc/debsig/policies/AC2D62742012EA22/1password.pol
+if [ ! -f "$POLICY_PATH" ]; then
+    curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol | \
+        sudo tee "$POLICY_PATH" >/dev/null
+fi
 
-sudo apt update && sudo apt install -y 1password 1password-cli
+sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+DEBSIG_KEY_PATH=/usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+if [ ! -f "$DEBSIG_KEY_PATH" ]; then
+    curl -sS https://downloads.1password.com/linux/keys/1password.asc | \
+        gpg --dearmor | sudo tee "$DEBSIG_KEY_PATH" >/dev/null
+fi
+
+# Install packages only when missing; update apt if needed
+need_install=0
+dpkg -s 1password >/dev/null 2>&1 || need_install=1
+dpkg -s 1password-cli >/dev/null 2>&1 || need_install=1
+
+if [ "${NEED_APT_UPDATE:-0}" -eq 1 ] || [ "$need_install" -eq 1 ]; then
+    sudo apt update
+fi
+if [ "$need_install" -eq 1 ]; then
+    sudo apt install -y 1password 1password-cli
+fi
+{{- else }}
+echo " Detected WSL: Skipping Linux 1Password apt setup."
+{{- end }}
 
 # Sanity checks
 echo " verifying binaries..."
+{{- if not .is_wsl }}
 command -v 1password >/dev/null && echo " - 1password: $(command -v 1password)"
-command -v op >/dev/null && echo " - op: $(command -v op)"
+{{- end }}
+command -v "${OP_BIN}" >/dev/null && echo " - ${OP_BIN}: $(command -v ${OP_BIN})"
 echo " versions:"
+{{- if not .is_wsl }}
 1password --version || true
-op --version || true
+{{- end }}
+"${OP_BIN}" --version || true
 
-# --- prompt user to enable CLI integration and SSH agent --------------------
-echo
-echo "Opening 1Password…"
-nohup 1password >/dev/null 2>&1 & disown || true
-echo " In 1Password, please enable these settings:"
-echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
-echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
-echo "  3. Make sure you're signed in and the app is unlocked"
-echo
-read -n 1 -s -r -p " Press any key when finished..."
-echo
-if op account list >/dev/null 2>&1; then
-  echo " ✅ 1Password CLI is integrated."
-else
-  echo " ⚠️  'op account list' didn't succeed. 1Password CLI integration is necessary for machine setup."
+# --- prompt user to enable CLI integration and SSH agent (idempotent) -------
+if ! "${OP_BIN}" account list >/dev/null 2>&1; then
+  {{- if .is_wsl }}
+  echo
+  echo " ⚠️  1Password for Windows CLI not detected or not integrated."
+  echo "     Please run 'chezmoi apply' in a Windows terminal first to install"
+  echo "     1Password & CLI and enable 'Integrate with 1Password CLI' + 'Use the SSH agent'."
+  echo "     After that, re-run this setup in WSL."
   exit 1
+  {{- else }}
+  echo
+  echo "Opening 1Password…"
+  nohup 1password >/dev/null 2>&1 & disown || true
+  echo " In 1Password, please enable these settings:"
+  echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
+  echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
+  echo "  3. Make sure you're signed in and the app is unlocked"
+  echo
+  read -n 1 -s -r -p " Press any key when finished..."
+  echo
+  if "${OP_BIN}" account list >/dev/null 2>&1; then
+    echo " ✅ 1Password CLI is integrated."
+  else
+    echo " ⚠️  '${OP_BIN} account list' didn't succeed. 1Password CLI integration is necessary for machine setup."
+    exit 1
+  fi
+  {{- end }}
+else
+  echo " ✅ 1Password CLI already integrated. Skipping UI prompt."
 fi
 
 # Check for SSH key and offer to create if missing
 echo " Checking for SSH key in 1Password..."
-if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
+if ! "${OP_BIN}" item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
   echo " ⚠️  SSH key 'Dev SSH Key' not found in 1Password."
   echo
   read -p " Would you like to create a new SSH key now? (y/N): " -n 1 -r
@@ -53,7 +127,7 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
 
     # Create SSH key with metadata including creation date
     creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-    if op item create \
+    if "${OP_BIN}" item create \
       --category "SSH Key" \
       --title "Dev SSH Key" \
       --ssh-generate-key ed25519 \
@@ -86,7 +160,7 @@ if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
 else
   echo " ✅ SSH key 'Dev SSH Key' found in 1Password."
   # Show key age if it has creation date metadata
-  creation_date=$(op item get "Dev SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
+  creation_date=$("${OP_BIN}" item get "Dev SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
   if [ -n "$creation_date" ]; then
     echo "    Created: ${creation_date}"
   fi
@@ -94,14 +168,14 @@ fi
 
 # Check for ssh-hosts and offer to create if missing
 echo " Checking for SSH hosts configuration..."
-if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
+if ! "${OP_BIN}" item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
   echo " ⚠️  SSH hosts configuration 'ssh-hosts' not found."
   echo
   read -p " Would you like to create it now? (y/N): " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Create basic ssh-hosts configuration
-    if op item create \
+    if "${OP_BIN}" item create \
       --category "Secure Note" \
       --title "ssh-hosts" \
       "hosts=# Add your custom SSH host configurations here

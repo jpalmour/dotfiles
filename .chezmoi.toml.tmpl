@@ -1,8 +1,15 @@
-# Source: ~/.local/share/chezmoi/chezmoi.toml.tmpl
+{{- $wsl := false -}}{{/* true if this instance is WSL */}}
+{{ if eq .chezmoi.os "linux" }}
+{{   if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+{{-   $wsl = true -}}
+{{   end }}
+{{ end }}
+
 [data]
   personal_email = "{{ promptString `Personal email (for global git, SSH key comment)` `jpalmour@gmail.com` }}"
   work_email     = "{{ promptString `Work email (leave blank if none)` `` }}"
   is_work_machine = {{ promptBool "Is this a WORK machine? (y/N)" false }}
+  is_wsl = {{ $wsl }}
   zshPlugins = [
     "git",
     "docker",

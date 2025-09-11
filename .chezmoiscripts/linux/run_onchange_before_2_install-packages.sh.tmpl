@@ -18,8 +18,15 @@ set -eufo pipefail
     "vim"
     "wget"
     "zsh" -}}
-{{ $snaps := list "chromium" "gh" -}}
-{{ $classicSnaps := list "code" "ghostty" "slack" -}}
+{{ $snaps := list -}}
+{{ $classicSnaps := list -}}
+{{ if .is_wsl -}}
+{{   $snaps = list "gh" -}}
+{{   $classicSnaps = list -}}
+{{ else -}}
+{{   $snaps = list "chromium" "gh" -}}
+{{   $classicSnaps = list "code" "ghostty" "slack" -}}
+{{ end -}}
 
 sudo apt-get update
 sudo apt-get install -y {{ $packages | join " " }}

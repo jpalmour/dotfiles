@@ -26,6 +26,13 @@ bin/termius-startup-picker.zsh
 .chezmoiscripts/windows/**
 {{- end }}
 
+# skip ssh management on WSL or work machines
+{{ if or .is_wsl .is_work_machine -}}
+.ssh/authorized_keys
+.ssh/config
+private
+{{- end }}
+
 # Documentation files (not deployed to home directory)
 *.md
 README.md
@@ -56,4 +63,3 @@ Pictures/**
 Public/**
 Templates/**
 Videos/**
-
