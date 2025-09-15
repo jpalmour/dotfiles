@@ -9,21 +9,27 @@ Host *
 {{- end }}
 
 # --- GitHub hosts (only on work machines) ---
+
 {{- if .is_work_machine }}
 Host github.com
   HostName github.com
   User git
   IdentitiesOnly yes
+  {{- if not .is_wsl }}
   IdentityFile "op://Private/Work SSH Key/private key"
+  {{- end }}
 
 Host github-personal.com
   HostName github.com
   User git
   IdentitiesOnly yes
+  {{- if not .is_wsl }}
   IdentityFile "op://Private/Dev SSH Key/private key"
+  {{- end }}
 {{- end }}
 
 # --- Private host blocks from 1Password ---
+
 {{- if or (and .is_wsl (lookPath "op.exe")) (and (not .is_wsl) (lookPath "op")) }}
 {{-   if .is_wsl -}}
 {{ output "op.exe" "read" "op://Private/ssh-hosts/hosts" }}

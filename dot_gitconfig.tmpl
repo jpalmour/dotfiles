@@ -36,6 +36,13 @@
     sshCommand = C:\\Windows\\System32\\OpenSSH\\ssh.exe
 {{- end }}
 
+{{- if .is_wsl }}
+
+# On WSL, use Windows OpenSSH to leverage Windows 1Password agent
+[core]
+    sshCommand = ssh.exe
+{{- end }}
+
 [user]
     name = Joseph Palmour
     email = {{ if and .is_work_machine (ne .work_email ``) -}}{{ .work_email }}{{- else -}}{{ .personal_email }}{{- end }}

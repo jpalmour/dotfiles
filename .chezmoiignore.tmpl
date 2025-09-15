@@ -46,6 +46,14 @@ AGENTS.md
 repos/**
 snap/**
 .config/**
+{{- if or (not .is_work_machine) (.is_wsl) }}
+.config/1Password/**
+{{- end }}
+
+{{- if .is_wsl }}
+# On WSL we use Windows OpenSSH + 1Password agent; skip Linux ssh client config
+private_dot_ssh/config
+{{- end }}
 
 # Ignore user data dirs
 Desktop/**
