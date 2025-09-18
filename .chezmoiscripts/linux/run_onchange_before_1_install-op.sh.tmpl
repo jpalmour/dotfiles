@@ -142,15 +142,14 @@ ensure_op_ssh_key() {
   fi
 }
 
-# prompt user to enable CLI integration and SSH agent
+# prompt user to enable CLI integration
 if ! "${OP_BIN}" account list >/dev/null 2>&1; then
   echo
   echo "Opening 1Password…"
   nohup 1password >/dev/null 2>&1 & disown || true
   echo " In 1Password, please enable these settings:"
   echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
-  echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
-  echo "  3. Make sure you're signed in and the app is unlocked"
+  echo "  2. Make sure you're signed in and the app is unlocked"
   echo
   read -n 1 -s -r -p " Press any key when finished..."
   echo
