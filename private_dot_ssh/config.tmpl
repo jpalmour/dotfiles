@@ -3,6 +3,7 @@ Host *
   ServerAliveCountMax 2
 {{- if eq .chezmoi.os "darwin" }}
   UseKeychain yes
+
 {{- end }}
 
 {{- if and .is_work_machine (not .is_wsl) -}}
@@ -18,10 +19,13 @@ Host github-personal.com
   User git
   IdentitiesOnly yes
   IdentityFile ~/.ssh/id_ed25519_dev
+
 {{- end }}
 
 {{-   if .is_wsl -}}
+
 {{ output "op.exe" "read" "op://Private/ssh-hosts/hosts" }}
 {{-   else -}}
+
 {{ onepasswordRead "op://Private/ssh-hosts/hosts" }}
 {{-   end -}}

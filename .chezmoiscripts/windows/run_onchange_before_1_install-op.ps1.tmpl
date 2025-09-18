@@ -5,7 +5,7 @@ function Test-Command { param([string]$Name) Get-Command $Name -ErrorAction Sile
 $ProgressPreference = 'SilentlyContinue'
 
 $opExists = Test-Command op
-$desktopExists = Test-Command 1Password
+$desktopExists = Test-Command '1Password'
 
 if (-not $desktopExists) {
   winget install 1password --accept-source-agreements --accept-package-agreements --silent
@@ -17,49 +17,49 @@ if (-not $opExists) {
 
 function Ensure-OpSshKey {
   param([string]$Title, [string]$Purpose)
-  Write-Host " Checking for SSH key '$Title' in 1Password..."
+  Write-Host (" Checking for SSH key '{0}' in 1Password..." -f $Title)
   try {
-    op item get $Title --fields "public key" *>$null
+    op item get $Title --fields 'public key' *>$null
     if ($LASTEXITCODE -eq 0) {
-      Write-Host " ✅ SSH key '$Title' found in 1Password."
+      Write-Host (" SSH key '{0}' found in 1Password." -f $Title)
       try {
-        $creationDate = op item get $Title --fields "Creation Date" 2>$null
-        if ($creationDate) { Write-Host "    Created: $creationDate" }
+        $creationDate = op item get $Title --fields 'Creation Date' 2>$null
+        if ($creationDate) { Write-Host ("    Created: {0}" -f $creationDate) }
       } catch {}
       return
     }
   } catch {}
 
-  Write-Host " ⚠️  SSH key '$Title' not found in 1Password."
+  Write-Host (" [WARN] SSH key '{0}' not found in 1Password." -f $Title)
   Write-Host ""
-  $createKey = Read-Host " Would you like to create '$Title' now? (y/N)"
+  $createKey = Read-Host (" Would you like to create '{0}' now? (y/N)" -f $Title)
   if ($createKey -match "^[Yy]$") {
-    Write-Host " Creating new Ed25519 key: $Title..."
+    Write-Host (" Creating new Ed25519 key: {0}..." -f $Title)
     $creationDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
     try {
-      op item create --category "SSH Key" --title $Title --ssh-generate-key ed25519 "Creation Date[text]=$creationDate" "Purpose[text]=$Purpose" *>$null
-      Write-Host " ✅ SSH key created successfully!"
+      op item create --category 'SSH Key' --title $Title --ssh-generate-key ed25519 ("Creation Date[text]={0}" -f $creationDate) ("Purpose[text]={0}" -f $Purpose) *>$null
+      Write-Host " [OK] SSH key created successfully!"
       Write-Host ""
-      Write-Host " 🔑 Public key for GitHub ($Title):"
+      Write-Host (" [KEY] Public key for GitHub ({0}):" -f $Title)
       Write-Host "========================================================================="
-      op item get $Title --fields "public key"
+      op item get $Title --fields 'public key'
       Write-Host "========================================================================="
       Write-Host ""
-      Write-Host " 📋 Next steps - Add this key to GitHub TWICE:"
-      Write-Host "  1. Go to https://github.com/settings/keys"
-      Write-Host "  2. Click 'New SSH key' → Add as 'Authentication Key'"
-      Write-Host "  3. Click 'New SSH key' again → Add as 'Signing Key'"
+      Write-Host ' Next steps - Add this key to GitHub TWICE:'
+      Write-Host '  1. Go to https://github.com/settings/keys'
+      Write-Host '  2. Click "New SSH key" -> Add as "Authentication Key"'
+      Write-Host '  3. Click "New SSH key" again -> Add as "Signing Key"'
       Write-Host ""
-      Write-Host -NoNewline " Press any key after adding the key to GitHub (both auth & signing)..."
+      Write-Host -NoNewline ' Press any key after adding the key to GitHub (both auth & signing)...'
       $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
       Write-Host ""
     } catch {
-      Write-Host " ❌ Failed to create SSH key '$Title'."
-      Write-Host " Machine setup requires '$Title'. Exiting now..."
+      Write-Host (" Failed to create SSH key '{0}'." -f $Title)
+      Write-Host (" Machine setup requires '{0}'. Exiting now..." -f $Title)
       exit 1
     }
   } else {
-    Write-Host " Skipping '$Title' creation. Machine setup requires this key. Exiting now..."
+    Write-Host (" Skipping '{0}' creation. Machine setup requires this key. Exiting now..." -f $Title)
     exit 1
   }
 }
@@ -70,98 +70,99 @@ function Ensure-Key {
     try { icacls $Priv /inheritance:r *>$null; icacls $Priv /grant:r "$env:USERNAME:(R,W)" *>$null } catch {}
     if (-not (Test-Path $Pub)) {
       try {
-        $pubKey = op item get $Title --fields "public key"
+        $pubKey = op item get $Title --fields 'public key'
         if ($LASTEXITCODE -eq 0 -and $pubKey) { Set-Content -Path $Pub -Value $pubKey -Encoding ascii }
       } catch {}
     }
-    Write-Host "  - kept $Priv (already exists)"
+    Write-Host ("  - kept {0} (already exists)" -f $Priv)
   } else {
     try {
-      $privKey = op item get $Title --fields "private key"
+      $privKey = op item get $Title --fields 'private key'
       if ($LASTEXITCODE -eq 0 -and $privKey) {
         Set-Content -Path $Priv -Value $privKey -Encoding ascii
         try { icacls $Priv /inheritance:r *>$null; icacls $Priv /grant:r "$env:USERNAME:(R,W)" *>$null } catch {}
         try {
-          $pubKey = op item get $Title --fields "public key"
+          $pubKey = op item get $Title --fields 'public key'
           if ($LASTEXITCODE -eq 0 -and $pubKey) { Set-Content -Path $Pub -Value $pubKey -Encoding ascii }
         } catch {}
-        Write-Host "  - wrote $Priv (+ .pub if available)"
+        Write-Host ("  - wrote {0} (+ .pub if available)" -f $Priv)
       } else {
-        Write-Host "  ⚠️  Could not read '$Title' private key from 1Password."
+        Write-Host ("  [WARN] Could not read '{0}' private key from 1Password." -f $Title)
       }
     } catch {
-      Write-Host "  ⚠️  Could not read '$Title' private key from 1Password."
+      Write-Host ("  [WARN] Could not read '{0}' private key from 1Password." -f $Title)
     }
   }
 }
 
 try {
   Write-Host ""
-  Write-Host " Opening 1Password…"
-  Start-Process "1password" -ErrorAction SilentlyContinue
+  Write-Host ' Opening 1Password...'
+  Start-Process '1password' -ErrorAction SilentlyContinue
 
-  Write-Host " In 1Password, please enable these settings:"
-  Write-Host "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
-  Write-Host "  2. Settings → Developer → ✅ 'Use the SSH agent'"
+  Write-Host ' In 1Password, please enable these settings:'
+  Write-Host '  1. Settings -> Developer -> [x] "Integrate with 1Password CLI"'
+  Write-Host '  2. Settings -> Developer -> [x] "Use the SSH agent"'
   Write-Host ""
-  Write-Host -NoNewline " Press any key when finished..."
+  Write-Host -NoNewline ' Press any key when finished...'
   $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
   Write-Host ""
 
   try {
     op account list *>$null
-    Write-Host " ✅ 1Password CLI can see your accounts."
+    Write-Host ' 1Password CLI can see your accounts.'
   } catch {
-    Write-Host " ⚠️  'op account list' didn't succeed. 1Password integration is required for machine setup."
+    Write-Host "   'op account list' didn't succeed. 1Password integration is required for machine setup."
     exit 1
   }
 
-  Ensure-OpSshKey -Title "Dev SSH Key" -Purpose "Development machine SSH authentication and Git signing"
+  Ensure-OpSshKey -Title 'Dev SSH Key' -Purpose 'Development machine SSH authentication and Git signing'
   {{- if .is_work_machine }}
-  Ensure-OpSshKey -Title "Work SSH Key" -Purpose "Work machine SSH authentication and Git signing"
+  Ensure-OpSshKey -Title 'Work SSH Key' -Purpose 'Work machine SSH authentication and Git signing'
   {{- end }}
 
-  Write-Host " Ensuring SSH keys exist in ~/.ssh for host selection..."
-  $sshDir = Join-Path $env:USERPROFILE ".ssh"
+  Write-Host ' Ensuring SSH keys exist in ~/.ssh for host selection...'
+  $sshDir = Join-Path $env:USERPROFILE '.ssh'
   New-Item -ItemType Directory -Path $sshDir -Force *>$null
 
-  $devPriv = Join-Path $sshDir "id_ed25519_dev"
-  $devPub  = Join-Path $sshDir "id_ed25519_dev.pub"
-  $workPriv = Join-Path $sshDir "id_ed25519_work"
-  $workPub  = Join-Path $sshDir "id_ed25519_work.pub"
+  $devPriv = Join-Path $sshDir 'id_ed25519_dev'
+  $devPub  = Join-Path $sshDir 'id_ed25519_dev.pub'
+  $workPriv = Join-Path $sshDir 'id_ed25519_work'
+  $workPub  = Join-Path $sshDir 'id_ed25519_work.pub'
 
   Ensure-Key -Title "Dev SSH Key" -Priv $devPriv -Pub $devPub
   {{- if .is_work_machine }}
   Ensure-Key -Title "Work SSH Key" -Priv $workPriv -Pub $workPub
   {{- end }}
 
-  Write-Host " Checking for SSH hosts configuration..."
+  Write-Host ' Checking for SSH hosts configuration...'
   try {
-    op item get "ssh-hosts" --fields "hosts" *>$null
-    Write-Host " ✅ SSH hosts configuration found in 1Password."
+    op item get 'ssh-hosts' --fields 'hosts' *>$null
+    Write-Host '  SSH hosts configuration found in 1Password.'
   } catch {
-    Write-Host " ⚠️  SSH hosts configuration 'ssh-hosts' not found."
+    Write-Host ("   SSH hosts configuration '{0}' not found." -f 'ssh-hosts')
     Write-Host ""
-    $createHosts = Read-Host " Would you like to create it now? (y/N)"
+    $createHosts = Read-Host ' Would you like to create it now? (y/N)'
     if ($createHosts -match "^[Yy]$") {
-      $hostsTemplate = @"
-# Add your custom SSH host configurations here
-# Example:
-# Host myserver
-#     HostName 192.168.1.100
-#     User myuser
-#     Port 22
-"@
+      $hostsTemplateLines = @(
+        "# Add your custom SSH host configurations here",
+        "# Example:",
+        "# Host myserver",
+        "#     HostName 192.168.1.100",
+        "#     User myuser",
+        "#     Port 22"
+      )
+      $hostsTemplate = $hostsTemplateLines -join "`n"
       try {
-        op item create --category "Secure Note" --title "ssh-hosts" "hosts=$hostsTemplate" *>$null
-        Write-Host " ✅ SSH hosts configuration created with template."
+        op item create --category 'Secure Note' --title 'ssh-hosts' ("hosts={0}" -f $hostsTemplate) *>$null
+        Write-Host '  SSH hosts configuration created with template.'
       } catch {
-        Write-Host " ❌ Failed to create SSH hosts configuration."
+        Write-Host '  Failed to create SSH hosts configuration.'
       }
     }
   }
 
 } catch {
-  Write-Host " Skipping 1Password app setup prompt due to error: $($_.Exception.Message)"
+  Write-Host (' Skipping 1Password app setup prompt due to error: {0}' -f $_.Exception.Message)
   exit 1
 }
