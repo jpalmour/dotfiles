@@ -26,6 +26,15 @@ bin/termius-startup-picker.zsh
 .chezmoiscripts/windows/**
 {{- end }}
 
+{{- if .is_work_machine }}
+install-ai-tools.ps1
+install-ai-tools.sh
+{{- end }}
+
+{{- if or (not .is_work_machine) (.is_wsl) }}
+.config/1Password/**
+{{- end }}
+
 # Documentation files (not deployed to home directory)
 *.md
 README.md
@@ -46,9 +55,6 @@ AGENTS.md
 repos/**
 snap/**
 .config/**
-{{- if or (not .is_work_machine) (.is_wsl) }}
-.config/1Password/**
-{{- end }}
 
 # Ignore user data dirs
 Desktop/**
