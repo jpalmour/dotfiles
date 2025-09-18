@@ -16,7 +16,7 @@ Host github.com
   User git
   IdentitiesOnly yes
   {{- if not .is_wsl }}
-  IdentityFile "op://Private/Work SSH Key/private key"
+  IdentityFile ~/.ssh/id_ed25519_work
   {{- end }}
 
 Host github-personal.com
@@ -24,7 +24,7 @@ Host github-personal.com
   User git
   IdentitiesOnly yes
   {{- if not .is_wsl }}
-  IdentityFile "op://Private/Dev SSH Key/private key"
+  IdentityFile ~/.ssh/id_ed25519_dev
   {{- end }}
 {{- end }}
 

@@ -163,3 +163,50 @@ else
 fi
 
 {{- end }}
+
+{{- if .is_work_machine }}
+
+# Write private keys (and matching .pub) to ~/.ssh for host-based selection
+echo " Ensuring SSH keys exist in ~/.ssh for host selection..."
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+DEV_PRIV_PATH="$HOME/.ssh/id_ed25519_dev"
+DEV_PUB_PATH="$HOME/.ssh/id_ed25519_dev.pub"
+WORK_PRIV_PATH="$HOME/.ssh/id_ed25519_work"
+WORK_PUB_PATH="$HOME/.ssh/id_ed25519_work.pub"
+
+write_key() {
+  title="$1"; priv_path="$2"; pub_path="$3"
+  if [ -f "$priv_path" ]; then
+    chmod 600 "$priv_path" || true
+    if [ ! -f "$pub_path" ]; then
+      if op item get "$title" --fields "public key" >/dev/null 2>&1; then
+        op item get "$title" --fields "public key" > "$pub_path" && chmod 644 "$pub_path"
+      elif command -v ssh-keygen >/dev/null 2>&1; then
+        ssh-keygen -y -f "$priv_path" > "$pub_path" && chmod 644 "$pub_path" || true
+      fi
+    fi
+    echo "  - kept $priv_path (already exists)"
+  else
+    if op item get "$title" --fields "private key" >/dev/null 2>&1; then
+      tmp=$(mktemp)
+      op item get "$title" --fields "private key" > "$tmp"
+      install -m 600 "$tmp" "$priv_path"
+      rm -f "$tmp"
+      if op item get "$title" --fields "public key" >/dev/null 2>&1; then
+        op item get "$title" --fields "public key" > "$pub_path" && chmod 644 "$pub_path"
+      elif command -v ssh-keygen >/dev/null 2>&1; then
+        ssh-keygen -y -f "$priv_path" > "$pub_path" && chmod 644 "$pub_path" || true
+      fi
+      echo "  - wrote $priv_path (+ .pub)"
+    else
+      echo "  ⚠️  Could not read '$title' private key from 1Password."
+    fi
+  fi
+}
+
+write_key "Dev SSH Key" "$DEV_PRIV_PATH" "$DEV_PUB_PATH"
+write_key "Work SSH Key" "$WORK_PRIV_PATH" "$WORK_PUB_PATH"
+
+{{- end }}
