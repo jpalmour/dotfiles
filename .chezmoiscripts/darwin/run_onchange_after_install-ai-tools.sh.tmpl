@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-{{ if .is_work_machine }}
-echo "Work machine detected, skipping installation of AI tools."
-exit 0
-{{ end }}
-
 # Load nvm
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"

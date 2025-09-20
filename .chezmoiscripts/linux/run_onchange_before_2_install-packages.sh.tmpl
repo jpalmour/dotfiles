@@ -25,7 +25,7 @@ set -eufo pipefail
 {{   $classicSnaps = list -}}
 {{ else -}}
 {{   $snaps = list "chromium" "gh" -}}
-{{   $classicSnaps = list "code" "ghostty" "slack" -}}
+{{   $classicSnaps = list "code" "ghostty" "postman" "slack" -}}
 {{ end -}}
 
 sudo apt-get update
@@ -39,3 +39,42 @@ if command -v snap >/dev/null 2>&1; then
   ( snap info {{ . }} | grep -q ^installed: ) || sudo snap install --classic {{ . }}
 {{ end -}}
 fi
+
+{{- if not .is_wsl }}
+echo " Ensuring Docker Engine is installed..."
+sudo install -m 0755 -d /etc/apt/keyrings
+
+TMP_DOCKER_ASC=$(mktemp)
+TMP_DOCKER_GPG=$(mktemp)
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o "$TMP_DOCKER_ASC"
+gpg --dearmor --output "$TMP_DOCKER_GPG" "$TMP_DOCKER_ASC"
+
+docker_repo_updated=0
+if [ ! -f /etc/apt/keyrings/docker.gpg ] || ! sudo cmp -s "$TMP_DOCKER_GPG" /etc/apt/keyrings/docker.gpg; then
+  sudo install -m 0644 "$TMP_DOCKER_GPG" /etc/apt/keyrings/docker.gpg
+  docker_repo_updated=1
+fi
+rm -f "$TMP_DOCKER_ASC" "$TMP_DOCKER_GPG"
+
+. /etc/os-release
+UBUNTU_CODENAME="${UBUNTU_CODENAME:-${VERSION_CODENAME}}"
+ARCH=$(dpkg --print-architecture)
+DOCKER_LIST=/etc/apt/sources.list.d/docker.list
+DOCKER_LINE="deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${UBUNTU_CODENAME} stable"
+
+if [ ! -f "$DOCKER_LIST" ] || ! grep -Fxq "$DOCKER_LINE" "$DOCKER_LIST"; then
+  echo "$DOCKER_LINE" | sudo tee "$DOCKER_LIST" >/dev/null
+  docker_repo_updated=1
+fi
+
+if [ "${docker_repo_updated}" -eq 1 ]; then
+  sudo apt-get update
+fi
+
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+sudo systemctl enable docker >/dev/null 2>&1 || true
+sudo systemctl start docker >/dev/null 2>&1 || true
+{{- else }}
+echo " Skipping Docker Engine installation under WSL; use Docker Desktop integration."
+{{- end }}

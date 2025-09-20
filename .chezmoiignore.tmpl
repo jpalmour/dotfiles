@@ -27,8 +27,8 @@ bin/termius-startup-picker.zsh
 {{- end }}
 
 {{- if .is_work_machine }}
-install-ai-tools.ps1
-install-ai-tools.sh
+.chezmoiscripts/darwin/run_onchange_after_install-ai-tools.sh
+.chezmoiscripts/windows/run_onchange_after_install-ai-tools.ps1
 {{- end }}
 
 {{- if or (not .is_work_machine) (.is_wsl) }}

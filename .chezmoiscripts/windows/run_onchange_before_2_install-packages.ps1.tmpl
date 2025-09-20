@@ -6,6 +6,7 @@ $packages = @(
     "Git.Git"
     "GitHub.cli"
     "Google.Chrome"
+    "Postman.Postman"
     "Microsoft.PowerShell"
     "Microsoft.WindowsTerminal"
     "SlackTechnologies.Slack"
@@ -13,6 +14,11 @@ $packages = @(
     "ghostty.ghostty"
     "jqlang.jq"
 )
+
+{{- if not .is_work_machine }}
+$packages += "OpenAI.ChatGPT"
+$packages += "Anthropic.Claude"
+{{- end }}
 
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
     winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent

@@ -60,23 +60,6 @@ Template files (`.tmpl` extension) can use Go template syntax:
 
 1. **Test before asking user to apply**: Always use `chezmoi diff`
 2. **Edit source files**: Make changes in this repository, not in the target files
-3. **Respect templates**: Keep `.tmpl` files as templates, don't remove the extension
-4. **No git operations**: Leave all version control to the repository owner
-5. **Preserve structure**: Maintain the existing file naming conventions
-6. **OS awareness**: Consider multi-OS support when making changes
-7. **DRY principle**: Avoid duplication, use templates and shared configs where possible
-
-## Common Tasks
-
-### Update a dotfile
-1. Edit the file in this directory (e.g., `dot_zshrc.tmpl`)
-2. Preview with `chezmoi diff`
-3. Apply with `chezmoi apply` (only if requested)
-
-### Remove a dotfile from management
-1. Use `chezmoi forget <file>` to stop managing it
-2. Or add `remove_` prefix to remove it from target
-
-### Working with OS-specific files
-1. Check `.chezmoiignore` for OS conditions
-2. Use templates with OS conditionals for shared configs
+3. **No git operations**: Leave all version control to the repository owner
+4. **OS awareness**: Consider multi-OS support when making changes
+5. **DRY principle**: Avoid duplication, use templates and shared configs where possible
