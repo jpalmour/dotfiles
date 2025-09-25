@@ -2,6 +2,29 @@ $ErrorActionPreference = 'Stop'
 
 function Test-Command { param([string]$Name) Get-Command $Name -ErrorAction SilentlyContinue | Out-Null }
 
+function Ensure-WindowsOpenSSH {
+  $sshPath = Join-Path $env:SystemRoot 'System32\OpenSSH\ssh.exe'
+  if (Test-Path $sshPath) {
+    Write-Host ' Windows OpenSSH Client already installed.'
+    return
+  }
+
+  Write-Host ' Installing Windows OpenSSH Client capability...'
+  try {
+    $capability = Get-WindowsCapability -Online -Name 'OpenSSH.Client~~~~0.0.1.0' -ErrorAction Stop
+    if ($capability.State -ne 'Installed') {
+      Add-WindowsCapability -Online -Name $capability.Name *>$null
+      Write-Host ' Windows OpenSSH Client installed.'
+    } else {
+      Write-Host ' Windows OpenSSH Client reported as installed after check.'
+    }
+  } catch {
+    Write-Host ('  [WARN] Unable to ensure Windows OpenSSH Client: {0}' -f $_.Exception.Message)
+  }
+}
+
+Ensure-WindowsOpenSSH
+
 $ProgressPreference = 'SilentlyContinue'
 
 $opExists = Test-Command op

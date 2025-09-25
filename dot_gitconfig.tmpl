@@ -33,7 +33,7 @@
 {{- if eq .chezmoi.os "windows" }}
 # Use Microsoft OpenSSH so 1Password’s agent works smoothly
 [core]
-    sshCommand = C:\\Windows\\System32\\OpenSSH\\ssh.exe
+    sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
 {{- end }}
 
 {{- if .is_wsl }}

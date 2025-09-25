@@ -1,13 +1,11 @@
 Host *
   ServerAliveInterval 60
   ServerAliveCountMax 2
-{{- if eq .chezmoi.os "darwin" }}
+{{ if eq .chezmoi.os "darwin" }}
   UseKeychain yes
+{{ end }}
 
-{{- end }}
-
-{{- if and .is_work_machine (not .is_wsl) -}}
-
+{{ if and .is_work_machine (not .is_wsl) }}
 Host github.com
   HostName github.com
   User git
@@ -20,12 +18,9 @@ Host github-personal.com
   IdentitiesOnly yes
   IdentityFile ~/.ssh/id_ed25519_dev
 
-{{- end }}
-
-{{-   if .is_wsl -}}
-
+{{ end }}
+{{ if .is_wsl }}
 {{ output "op.exe" "read" "op://Private/ssh-hosts/hosts" }}
-{{-   else -}}
-
+{{ else }}
 {{ onepasswordRead "op://Private/ssh-hosts/hosts" }}
-{{-   end -}}
+{{ end }}
