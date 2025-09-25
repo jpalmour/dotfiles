@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 set -e
-# ensure brew is in PATH
+
+# Ensure Homebrew is ready and in PATH
 if [ -x /opt/homebrew/bin/brew ]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 elif [ -x /usr/local/bin/brew ]; then
@@ -9,91 +10,157 @@ else
   echo "Homebrew is required" >&2
   exit 1
 fi
+
 if ! command -v 1password >/dev/null 2>&1; then
-    brew install --cask 1password
+  brew install --cask 1password
 fi
 if ! command -v op >/dev/null 2>&1; then
-    brew install 1password-cli
+  brew install 1password-cli
 fi
 
-# Verify versions
-command -v 1password && 1password --version || true
-command -v op && op --version || true
+OP_BIN="op"
 
-# --- prompt user to enable CLI integration and SSH agent --------------------
+# Sanity checks
+echo " verifying binaries..."
+command -v 1password >/dev/null && echo " - 1password: $(command -v 1password)"
+command -v "${OP_BIN}" >/dev/null && echo " - ${OP_BIN}: $(command -v ${OP_BIN})"
+echo " versions:"
+1password --version || true
+"${OP_BIN}" --version || true
+
+# Prompt user to enable CLI integration and SSH agent
 echo
-echo " Opening 1Password…"
-open -a "1Password" || true
-echo " In 1Password, please enable these settings:"
-echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
-echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
-echo
-read -n 1 -s -r -p " Press any key when finished..."
-echo
-if op account list >/dev/null 2>&1; then
-  echo " ✅ 1Password CLI is integrated."
+if ! "${OP_BIN}" account list >/dev/null 2>&1; then
+  echo " Opening 1Password…"
+  open -a "1Password" || true
+  echo " In 1Password, please enable these settings:"
+  echo "  1. Settings → Developer → ✅ 'Integrate with 1Password CLI'"
+  echo "  2. Settings → Developer → ✅ 'Use the SSH agent'"
+  echo
+  read -n 1 -s -r -p " Press any key when finished..."
+  echo
+  if "${OP_BIN}" account list >/dev/null 2>&1; then
+    echo " ✅ 1Password CLI is integrated."
+  else
+    echo " ⚠️  '${OP_BIN} account list' didn't succeed. 1Password CLI integration is necessary for machine setup."
+    exit 1
+  fi
 else
-  echo " ⚠️  'op account list' didn't succeed. 1Password CLI integration is necessary for machine setup."
-  exit 1
+  echo " ✅ 1Password CLI already integrated."
 fi
 
-# Check for SSH key and offer to create if missing
-echo " Checking for SSH key in 1Password..."
-if ! op item get "Dev SSH Key" --fields "public key" >/dev/null 2>&1; then
-  echo " ⚠️  SSH key 'Dev SSH Key' not found in 1Password."
-  echo
-  read -p " Would you like to create a new SSH key now? (y/N): " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo " Creating new Ed25519 SSH key..."
-    creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-    if op item create \
-      --category "SSH Key" \
-      --title "Dev SSH Key" \
-      --ssh-generate-key ed25519 \
-      "Creation Date[text]=${creation_date}" \
-      "Purpose[text]=Development machine SSH authentication and Git signing" \
-      >/dev/null 2>&1; then
+ensure_op_ssh_key() {
+  local title="$1"; local purpose="$2"
 
-      echo " ✅ SSH key created successfully!"
-      echo
-      echo " 🔑 Public key for GitHub:"
-      echo "========================================================================="
-      op item get "Dev SSH Key" --fields "public key"
-      echo "========================================================================="
-      echo
-      echo " 📋 Next steps - Add this key to GitHub TWICE:"
-      echo "  1. Go to https://github.com/settings/keys"
-      echo "  2. Click 'New SSH key' → Add as 'Authentication Key'"
-      echo "  3. Click 'New SSH key' again → Add as 'Signing Key'"
-      echo
-      read -n 1 -s -r -p " Press any key after adding the key to GitHub (both auth & signing)..."
-      echo
+  echo " Checking for SSH key '$title' in 1Password..."
+  if ! "${OP_BIN}" item get "$title" --fields "public key" >/dev/null 2>&1; then
+    echo " ⚠️  SSH key '$title' not found in 1Password."
+    echo
+    read -p " Would you like to create '$title' now? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo " Creating new Ed25519 key: $title..."
+      local creation_date
+      creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+      if "${OP_BIN}" item create \
+        --category "SSH Key" \
+        --title "$title" \
+        --ssh-generate-key ed25519 \
+        "Creation Date[text]=${creation_date}" \
+        "Purpose[text]=${purpose}" \
+        >/dev/null 2>&1; then
+
+        echo " ✅ SSH key created successfully!"
+        echo
+        echo " 🔑 Public key for GitHub ($title):"
+        echo "========================================================================="
+        "${OP_BIN}" item get "$title" --fields "public key"
+        echo "========================================================================="
+        echo
+        echo " 📋 Next steps - Add this key to the appropriate GitHub account TWICE:"
+        echo "  1. Go to https://github.com/settings/keys"
+        echo "  2. Click 'New SSH key' → Add as 'Authentication Key'"
+        echo "  3. Click 'New SSH key' again → Add as 'Signing Key'"
+        echo
+        read -n 1 -s -r -p " Press any key after adding the key to GitHub (both auth & signing)..."
+        echo
+      else
+        echo " ❌ Failed to create SSH key '$title'."
+        echo " Machine setup requires '$title'. Exiting now..."
+        exit 1
+      fi
     else
-      echo " ❌ Failed to create SSH key. Please create it manually:"
-      echo " Run: op item create --category \"SSH Key\" --title \"Dev SSH Key\" --ssh-generate-key ed25519"
+      echo " Skipping '$title' creation. Machine setup requires this key. Exiting now..."
+      exit 1
     fi
   else
-    echo " Skipping SSH key creation. You can create it manually later."
-    echo " See 1PASS_SETUP.md for instructions."
+    echo " ✅ SSH key '$title' found in 1Password."
+    local creation_date
+    creation_date=$("${OP_BIN}" item get "$title" --fields "Creation Date" 2>/dev/null || echo "")
+    if [ -n "$creation_date" ]; then
+      echo "    Created: ${creation_date}"
+    fi
   fi
-else
-  echo " ✅ SSH key 'Dev SSH Key' found in 1Password."
-  creation_date=$(op item get "Dev SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
-  if [ -n "$creation_date" ]; then
-    echo "    Created: ${creation_date}"
+}
+
+ensure_op_ssh_key "Dev SSH Key" "Development machine SSH authentication and Git signing"
+{{- if .is_work_machine }}
+ensure_op_ssh_key "Work SSH Key" "Work machine SSH authentication and Git signing"
+{{- end }}
+
+echo " Ensuring SSH keys exist in ~/.ssh for host selection..."
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+DEV_PRIV_PATH="$HOME/.ssh/id_ed25519_dev"
+DEV_PUB_PATH="$HOME/.ssh/id_ed25519_dev.pub"
+WORK_PRIV_PATH="$HOME/.ssh/id_ed25519_work"
+WORK_PUB_PATH="$HOME/.ssh/id_ed25519_work.pub"
+
+write_key() {
+  local title="$1" priv_path="$2" pub_path="$3"
+  if [ -f "$priv_path" ]; then
+    chmod 600 "$priv_path" || true
+    if [ ! -f "$pub_path" ]; then
+      if "${OP_BIN}" item get "$title" --fields "public key" >/dev/null 2>&1; then
+        "${OP_BIN}" item get "$title" --fields "public key" > "$pub_path" && chmod 644 "$pub_path"
+      elif command -v ssh-keygen >/dev/null 2>&1; then
+        ssh-keygen -y -f "$priv_path" > "$pub_path" && chmod 644 "$pub_path" || true
+      fi
+    fi
+    echo "  - kept $priv_path (already exists)"
+  else
+    if "${OP_BIN}" item get "$title" --fields "private key" >/dev/null 2>&1; then
+      tmp=$(mktemp)
+      "${OP_BIN}" item get "$title" --fields "private key" > "$tmp"
+      install -m 600 "$tmp" "$priv_path"
+      rm -f "$tmp"
+      if "${OP_BIN}" item get "$title" --fields "public key" >/dev/null 2>&1; then
+        "${OP_BIN}" item get "$title" --fields "public key" > "$pub_path" && chmod 644 "$pub_path"
+      elif command -v ssh-keygen >/dev/null 2>&1; then
+        ssh-keygen -y -f "$priv_path" > "$pub_path" && chmod 644 "$pub_path" || true
+      fi
+      echo "  - wrote $priv_path (+ .pub)"
+    else
+      echo "  ⚠️  Could not read '$title' private key from 1Password."
+    fi
   fi
-fi
+}
+
+write_key "Dev SSH Key" "$DEV_PRIV_PATH" "$DEV_PUB_PATH"
+{{- if .is_work_machine }}
+write_key "Work SSH Key" "$WORK_PRIV_PATH" "$WORK_PUB_PATH"
+{{- end }}
 
 # Check for ssh-hosts and offer to create if missing
 echo " Checking for SSH hosts configuration..."
-if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
+if ! "${OP_BIN}" item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
   echo " ⚠️  SSH hosts configuration 'ssh-hosts' not found."
   echo
   read -p " Would you like to create it now? (y/N): " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if op item create \
+    if "${OP_BIN}" item create \
       --category "Secure Note" \
       --title "ssh-hosts" \
       "hosts=# Add your custom SSH host configurations here
@@ -111,102 +178,3 @@ if ! op item get "ssh-hosts" --fields "hosts" >/dev/null 2>&1; then
 else
   echo " ✅ SSH hosts configuration found in 1Password."
 fi
-
-{{- if .is_work_machine }}
-
-# Check for WORK SSH key and offer to create if missing
-echo " Checking for WORK SSH key in 1Password..."
-if ! op item get "Work SSH Key" --fields "public key" >/dev/null 2>&1; then
-  echo " ⚠️  SSH key 'Work SSH Key' not found in 1Password."
-  echo
-  read -p " Would you like to create a new WORK SSH key now? (y/N): " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo " Creating new Ed25519 WORK SSH key..."
-
-    creation_date=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-    if op item create \
-      --category "SSH Key" \
-      --title "Work SSH Key" \
-      --ssh-generate-key ed25519 \
-      "Creation Date[text]=${creation_date}" \
-      "Purpose[text]=Work machine SSH authentication and Git signing" \
-      >/dev/null 2>&1; then
-
-      echo " ✅ Work SSH key created successfully!"
-      echo
-      echo " 🔑 Public key for GitHub (WORK):"
-      echo "========================================================================="
-      op item get "Work SSH Key" --fields "public key"
-      echo "========================================================================="
-      echo
-      echo " 📋 Next steps - Add this WORK key to GitHub TWICE (work account):"
-      echo "  1. Go to https://github.com/settings/keys"
-      echo "  2. Click 'New SSH key' → Add as 'Authentication Key'"
-      echo "  3. Click 'New SSH key' again → Add as 'Signing Key'"
-      echo
-      read -n 1 -s -r -p " Press any key after adding the WORK key to GitHub (both auth & signing)..."
-      echo
-    else
-      echo " ❌ Failed to create WORK SSH key. Please create it manually:"
-      echo " Run: op item create --category \"SSH Key\" --title \"Work SSH Key\" --ssh-generate-key ed25519"
-    fi
-  else
-    echo " Skipping WORK SSH key creation. You can create it manually later."
-  fi
-else
-  echo " ✅ WORK SSH key 'Work SSH Key' found in 1Password."
-  creation_date=$(op item get "Work SSH Key" --fields "Creation Date" 2>/dev/null || echo "")
-  if [ -n "$creation_date" ]; then
-    echo "    Created: ${creation_date}"
-  fi
-fi
-
-{{- end }}
-
-{{- if .is_work_machine }}
-
-# Write private keys (and matching .pub) to ~/.ssh for host-based selection
-echo " Ensuring SSH keys exist in ~/.ssh for host selection..."
-mkdir -p "$HOME/.ssh"
-chmod 700 "$HOME/.ssh"
-
-DEV_PRIV_PATH="$HOME/.ssh/id_ed25519_dev"
-DEV_PUB_PATH="$HOME/.ssh/id_ed25519_dev.pub"
-WORK_PRIV_PATH="$HOME/.ssh/id_ed25519_work"
-WORK_PUB_PATH="$HOME/.ssh/id_ed25519_work.pub"
-
-write_key() {
-  title="$1"; priv_path="$2"; pub_path="$3"
-  if [ -f "$priv_path" ]; then
-    chmod 600 "$priv_path" || true
-    if [ ! -f "$pub_path" ]; then
-      if op item get "$title" --fields "public key" >/dev/null 2>&1; then
-        op item get "$title" --fields "public key" > "$pub_path" && chmod 644 "$pub_path"
-      elif command -v ssh-keygen >/dev/null 2>&1; then
-        ssh-keygen -y -f "$priv_path" > "$pub_path" && chmod 644 "$pub_path" || true
-      fi
-    fi
-    echo "  - kept $priv_path (already exists)"
-  else
-    if op item get "$title" --fields "private key" >/dev/null 2>&1; then
-      tmp=$(mktemp)
-      op item get "$title" --fields "private key" > "$tmp"
-      install -m 600 "$tmp" "$priv_path"
-      rm -f "$tmp"
-      if op item get "$title" --fields "public key" >/dev/null 2>&1; then
-        op item get "$title" --fields "public key" > "$pub_path" && chmod 644 "$pub_path"
-      elif command -v ssh-keygen >/dev/null 2>&1; then
-        ssh-keygen -y -f "$priv_path" > "$pub_path" && chmod 644 "$pub_path" || true
-      fi
-      echo "  - wrote $priv_path (+ .pub)"
-    else
-      echo "  ⚠️  Could not read '$title' private key from 1Password."
-    fi
-  fi
-}
-
-write_key "Dev SSH Key" "$DEV_PRIV_PATH" "$DEV_PUB_PATH"
-write_key "Work SSH Key" "$WORK_PRIV_PATH" "$WORK_PUB_PATH"
-
-{{- end }}
