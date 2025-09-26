@@ -21,5 +21,11 @@ $packages += "Anthropic.Claude"
 {{- end }}
 
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
+    $existing = winget list --id $pkg --exact --source winget 2>&1
+    if ($existing -and -not ($existing -match 'No package found matching input criteria')) {
+        Write-Host "[INFO] $pkg already installed; skipping."
+        continue
+    }
+
     winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
 }
