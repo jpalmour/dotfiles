@@ -30,6 +30,9 @@
 # 1Password CLI not installed - signing config will be available after 1Password is configured
 {{- end }}
 
+[push]
+    autoSetupRemote = true
+
 {{- if eq .chezmoi.os "windows" }}
 # Use Microsoft OpenSSH so 1Password’s agent works smoothly
 [core]
