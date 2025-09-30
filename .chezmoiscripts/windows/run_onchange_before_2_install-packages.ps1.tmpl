@@ -2,6 +2,12 @@ $ErrorActionPreference = 'Stop'
 
 function Ensure-PackageProvider {
     param([string]$Name, [Version]$MinimumVersion)
+    
+    # PackageProvider is only needed in Windows PowerShell 5.1, not in PowerShell 7+
+    if ($PSVersionTable.PSVersion.Major -ge 7) {
+        return
+    }
+    
     try {
         $provider = Get-PackageProvider -Name $Name -ErrorAction SilentlyContinue
         if (-not $provider -or $provider.Version -lt $MinimumVersion) {
@@ -19,6 +25,16 @@ function Ensure-Module {
     )
 
     try {
+        # Ensure PSGallery is trusted to prevent interactive prompts during installation
+        try {
+            $gallery = Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue
+            if ($gallery -and $gallery.InstallationPolicy -ne 'Trusted') {
+                Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction SilentlyContinue
+            }
+        } catch {
+            # PSRepository commands may not be available; continue without them
+        }
+
         $module = Get-Module -ListAvailable -Name $Name | Sort-Object Version -Descending | Select-Object -First 1
         $needsInstall = -not $module
         if (-not $needsInstall -and $MinimumVersion) {
@@ -26,15 +42,31 @@ function Ensure-Module {
         }
 
         if ($needsInstall) {
-            $installParams = @{ Name = $Name; Scope = 'CurrentUser'; Force = $true; AllowClobber = $true }
+            Write-Host ("[ACTION] Installing PowerShell module '{0}'..." -f $Name)
+            $installParams = @{ 
+                Name = $Name
+                Scope = 'CurrentUser'
+                Force = $true
+                AllowClobber = $true
+            }
             if ($MinimumVersion) { $installParams['MinimumVersion'] = $MinimumVersion }
+            
+            # Try with SkipPublisherCheck if available (PowerShell 7+)
+            if ($PSVersionTable.PSVersion.Major -ge 7) {
+                $installParams['SkipPublisherCheck'] = $true
+            }
+            
             Install-Module @installParams -ErrorAction Stop
+            
+            # Verify the module can be imported
+            Import-Module -Name $Name -ErrorAction Stop
             Write-Host ("[OK] Installed PowerShell module '{0}'." -f $Name)
         } else {
             Write-Host ("[INFO] PowerShell module '{0}' already present (v{1})." -f $Name, $module.Version)
         }
     } catch {
-        Write-Host ("[WARN] Failed to install PowerShell module '{0}': {1}" -f $Name, $_.Exception.Message)
+        Write-Host ("[ERROR] Failed to install PowerShell module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Red
+        Write-Host ("        Run 'Install-Module -Name {0} -Scope CurrentUser -Force' manually to diagnose." -f $Name) -ForegroundColor Yellow
     }
 }
 
@@ -76,7 +108,7 @@ $packages = @(
     "Microsoft.PowerShell"
     "Microsoft.WindowsTerminal"
     "SlackTechnologies.Slack"
-    "Vim.Vim"
+    "vim.vim"
     "JanDeDobbeleer.OhMyPosh"
     "jqlang.jq"
 )
