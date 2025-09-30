@@ -27,7 +27,7 @@ if (-not $ompCommand) {
 
 if ($ompCommand) {
     try {
-        & $ompCommand.Name init pwsh | Invoke-Expression
+        & $ompCommand.Name init pwsh --config powerlevel10k_classic | Invoke-Expression
     } catch {
         Write-Verbose ("Failed to initialize oh-my-posh: {0}" -f $_.Exception.Message)
     }
