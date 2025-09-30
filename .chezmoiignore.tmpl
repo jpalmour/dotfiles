@@ -26,19 +26,6 @@ bin/termius-startup-picker.zsh
 .chezmoiscripts/windows/**
 {{- end }}
 
-{{ if eq .chezmoi.os "windows" -}}
-!.chezmoiscripts/windows/**
-!.chezmoiscripts/windows
-!.chezmoiscripts/windows/run_onchange_before_2_install-packages.ps1.tmpl
-!private_AppData/**
-!private_AppData
-!private_AppData/Local
-!private_AppData/Local/Packages
-!private_AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe
-!private_AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState
-!private_AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json.tmpl
-{{- end }}
-
 {{- if .is_work_machine }}
 .chezmoiscripts/windows/install-ai-tools.ps1
 .chezmoiscripts/linux/install-ai-tools.sh
@@ -51,9 +38,6 @@ bin/termius-startup-picker.zsh
 
 # Documentation files (not deployed to home directory)
 *.md
-README.md
-CLAUDE.md
-AGENTS.md
 
 # Ignore generated shell files we don't care about
 .bashrc
@@ -69,14 +53,15 @@ AGENTS.md
 repos/**
 snap/**
 .config/**
-{{ if eq .chezmoi.os "windows" -}}
-!.config/powershell
-!.config/powershell/**
-{{- end }}
 
 # Ignore user data dirs
 Desktop/**
 Documents/**
+{{ if eq .chezmoi.os "windows" -}}
+!Documents/
+!Documents/PowerShell/
+!Documents/PowerShell/Microsoft.PowerShell_profile.ps1
+{{- end }}
 Downloads/**
 Music/**
 Pictures/**
