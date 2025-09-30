@@ -37,3 +37,11 @@ if ($ompCommand) {
 
 # No additional configuration needed; Terminal-Icons initialization happens on import.
 
+{{- if .is_work_machine }}
+# Work-specific aliases (work machine only)
+if ($env:WORK_ALIASES_PATH -and (Test-Path $env:WORK_ALIASES_PATH)) {
+    . $env:WORK_ALIASES_PATH
+} else {
+    Write-Verbose 'WORK_ALIASES_PATH not set or file not found.'
+}
+{{- end }}
