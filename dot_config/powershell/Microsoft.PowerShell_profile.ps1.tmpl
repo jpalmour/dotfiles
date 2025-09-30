@@ -1,0 +1,39 @@
+# PowerShell profile (current user, all hosts)
+# Ensures core productivity modules and Oh My Posh prompt are available.
+
+# Load essential modules if present. Missing modules are non-fatal; install script handles setup.
+foreach ($moduleName in @('PSReadLine', 'posh-git', 'Terminal-Icons')) {
+    try {
+        if (-not (Get-Module -Name $moduleName)) {
+            Import-Module -Name $moduleName -ErrorAction Stop
+        }
+    } catch {
+        Write-Verbose ("Failed to import module '{0}': {1}" -f $moduleName, $_.Exception.Message)
+    }
+}
+
+# Configure PSReadLine for a smoother interactive experience.
+if (Get-Module -ListAvailable -Name 'PSReadLine') {
+    Set-PSReadLineOption -EditMode Windows
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -PredictionViewStyle ListView
+}
+
+# Initialize Oh My Posh if available.
+$ompCommand = Get-Command 'oh-my-posh.exe' -ErrorAction SilentlyContinue
+if (-not $ompCommand) {
+    $ompCommand = Get-Command 'oh-my-posh' -ErrorAction SilentlyContinue
+}
+
+if ($ompCommand) {
+    try {
+        & $ompCommand.Name init pwsh | Invoke-Expression
+    } catch {
+        Write-Verbose ("Failed to initialize oh-my-posh: {0}" -f $_.Exception.Message)
+    }
+} else {
+    Write-Verbose 'oh-my-posh not found on PATH.'
+}
+
+# No additional configuration needed; Terminal-Icons initialization happens on import.
+
