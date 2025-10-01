@@ -70,6 +70,36 @@ function Ensure-Module {
     }
 }
 
+function Add-ToUserPath {
+    param([string]$Directory)
+    
+    if (-not (Test-Path $Directory)) {
+        Write-Host "[WARN] Directory does not exist, cannot add to PATH: $Directory" -ForegroundColor Yellow
+        return
+    }
+
+    # Get current user PATH
+    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+    $pathParts = $userPath -split ';' | Where-Object { $_ -ne '' }
+    
+    # Check if directory is already in PATH (case-insensitive)
+    $normalizedDir = $Directory.TrimEnd('\')
+    $alreadyInPath = $pathParts | Where-Object { $_.TrimEnd('\') -eq $normalizedDir }
+    
+    if (-not $alreadyInPath) {
+        # Add to PATH permanently for current user
+        $newPath = (@($pathParts) + $normalizedDir) -join ';'
+        [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
+        
+        # Also update current session
+        $env:Path = "$env:Path;$normalizedDir"
+        
+        Write-Host "[OK] Added to user PATH: $normalizedDir"
+    } else {
+        Write-Host "[INFO] Already in user PATH: $normalizedDir"
+    }
+}
+
 function Test-CaskaydiaFont {
     $fontDirs = @(
         (Join-Path $env:WINDIR 'Fonts'),
@@ -186,11 +216,40 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
             Ensure-Module -Name 'posh-git' -MinimumVersion '1.1.0'
             Ensure-Module -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
         }
+        if ($pkg -eq 'vim.vim') {
+            # Ensure Vim is in PATH even if already installed
+            $vimPath = "${env:ProgramFiles}\Vim\vim91"
+            if (Test-Path $vimPath) {
+                Add-ToUserPath -Directory $vimPath
+            } else {
+                # Try to find any vim## directory
+                $vimBaseDir = "${env:ProgramFiles}\Vim"
+                if (Test-Path $vimBaseDir) {
+                    $vimDir = Get-ChildItem -Path $vimBaseDir -Directory -Filter "vim*" | Sort-Object Name -Descending | Select-Object -First 1
+                    if ($vimDir) {
+                        Add-ToUserPath -Directory $vimDir.FullName
+                    }
+                }
+            }
+        }
         continue
     }
 
     Write-Host "[ACTION] Installing $pkg..."
-    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+    
+    # Special handling for PowerShell - uninstall old version if install technology differs
+    if ($pkg -eq 'Microsoft.PowerShell') {
+        $installResult = winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent 2>&1
+        if ($LASTEXITCODE -ne 0 -and $installResult -match 'install technology is different') {
+            Write-Host "[WARN] PowerShell has different install technology. Uninstalling old version first..."
+            winget uninstall -e --id $pkg --silent --force 2>$null
+            Start-Sleep -Seconds 2
+            Write-Host "[ACTION] Installing PowerShell $pkg..."
+            winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+        }
+    } else {
+        winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+    }
 
     if ($pkg -eq 'Microsoft.PowerShell') {
         Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
@@ -199,6 +258,27 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
         Ensure-Module -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
         if (-not (Test-CaskaydiaFont)) {
             Write-Host "[WARN] CaskaydiaCove Nerd Font not detected. Download 'Caskaydia Cove' from https://www.nerdfonts.com/font-downloads, then right-click 'CaskaydiaCoveNerdFontMono-Regular.ttf' > Show more options > Install for all users, and set Windows Terminal to use 'CaskaydiaCove NF'."
+        }
+    }
+    
+    if ($pkg -eq 'vim.vim') {
+        # Add Vim to PATH after installation
+        $vimPath = "${env:ProgramFiles}\Vim\vim91"
+        if (Test-Path $vimPath) {
+            Add-ToUserPath -Directory $vimPath
+        } else {
+            # Try to find any vim## directory
+            $vimBaseDir = "${env:ProgramFiles}\Vim"
+            if (Test-Path $vimBaseDir) {
+                $vimDir = Get-ChildItem -Path $vimBaseDir -Directory -Filter "vim*" | Sort-Object Name -Descending | Select-Object -First 1
+                if ($vimDir) {
+                    Add-ToUserPath -Directory $vimDir.FullName
+                } else {
+                    Write-Host "[WARN] Vim installed but vim directory not found in $vimBaseDir" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "[WARN] Vim installed but $vimBaseDir does not exist" -ForegroundColor Yellow
+            }
         }
     }
 }
