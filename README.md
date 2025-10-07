@@ -10,6 +10,13 @@ Install chezmoi and apply dotfiles in one command:
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ```
 
+### Windows (PowerShell)
+
+```powershell
+winget install twpayne.chezmoi
+chezmoi init --apply jpalmour
+```
+
 ## Daily Usage
 
 - **Pull latest changes**: `chezmoi update`
