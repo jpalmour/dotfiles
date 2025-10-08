@@ -26,16 +26,6 @@ bin/termius-startup-picker.zsh
 .chezmoiscripts/windows/**
 {{- end }}
 
-{{- if .is_work_machine }}
-.chezmoiscripts/windows/install-personal-ai-tools.ps1
-.chezmoiscripts/linux/install-personal-ai-tools.sh
-.chezmoiscripts/darwin/install-personal-ai-tools.sh
-{{ else }}
-.chezmoiscripts/windows/install-work-ai-tools.ps1
-.chezmoiscripts/linux/install-work-ai-tools.sh
-.chezmoiscripts/darwin/install-work-ai-tools.sh
-{{- end }}
-
 {{- if or (not .is_work_machine) (.is_wsl) }}
 .config/1Password/**
 {{- end }}

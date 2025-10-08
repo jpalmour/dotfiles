@@ -5,4 +5,5 @@ if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) {
 }
 
 nvm install lts
+# Set LTS as the default version (Windows nvm uses 'nvm use' to set default)
 nvm use lts

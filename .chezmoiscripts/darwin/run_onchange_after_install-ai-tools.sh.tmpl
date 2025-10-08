@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# Load nvm and use current default version
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
+# Install/upgrade AI CLI tools
+{{- if .is_work_machine }}
+npm install -g @anthropic-ai/claude-code
+{{- else }}
+npm install -g @openai/codex @anthropic-ai/claude-code @google/gemini-cli @google/jules
+{{- end }}
+

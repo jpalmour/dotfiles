@@ -8,4 +8,6 @@ fi
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
   nvm install --lts
+  # Set LTS as the default version
+  nvm alias default "lts/*"
 fi

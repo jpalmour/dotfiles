@@ -1,0 +1,10 @@
+$ErrorActionPreference = "Stop"
+Write-Output "Installing/upgrading AI CLI tools via npm..."
+
+# Use current default node version
+{{- if .is_work_machine }}
+npm install -g @anthropic-ai/claude-code
+{{- else }}
+npm install -g @openai/codex @anthropic-ai/claude-code @google/gemini-cli @google/jules
+{{- end }}
+
