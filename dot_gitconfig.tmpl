@@ -1,47 +1,31 @@
-{{- if or (and .is_wsl (lookPath "op.exe")) (and (not .is_wsl) (lookPath "op")) }}
+{{- if lookPath "ssh-keygen" }}
 [gpg]
     format = ssh
 
 [gpg "ssh"]
-    {{- if eq .chezmoi.os "darwin" }}
-    program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-    {{- else if eq .chezmoi.os "linux" }}
-    {{-   if .is_wsl }}
-    program = op-ssh-sign.exe
-    {{-   else }}
-    program = /opt/1Password/op-ssh-sign
-    {{-   end }}
-    {{- else if eq .chezmoi.os "windows" }}
-    program = op-ssh-sign.exe
-    {{- else }}
-    ssh.program = op-ssh-sign
-    {{- end }}
+    program = {{ if eq .chezmoi.os "windows" }}C:/Windows/System32/OpenSSH/ssh-keygen.exe{{ else }}ssh-keygen{{ end }}
 
 [commit]
     gpgSign = true
 
 [user]
-    {{- if .is_wsl -}}
-    signingkey = {{ if .is_work_machine }}{{ output "op.exe" "read" "--no-newline" "op://Private/Work SSH Key/public_key" }}{{ else }}{{ output "op.exe" "read" "--no-newline" "op://Private/Dev SSH Key/public_key" }}{{ end }}
-    {{- else -}}
-    signingkey = {{ if .is_work_machine -}}{{ onepasswordRead "op://Private/Work SSH Key/public_key" }}{{- else -}}{{ onepasswordRead "op://Private/Dev SSH Key/public_key" }}{{- end }}
-    {{- end }}
+    signingkey = ~/.ssh/{{ if .is_work_machine -}}id_ed25519_work{{- else -}}id_ed25519_dev{{- end }}
 {{- else }}
-# 1Password CLI not installed - signing config will be available after 1Password is configured
+# OpenSSH ssh-keygen not found - install OpenSSH to enable SSH signing
 {{- end }}
 
 [push]
     autoSetupRemote = true
 
 {{- if eq .chezmoi.os "windows" }}
-# Use Microsoft OpenSSH so 1Password’s agent works smoothly
+# Use Microsoft OpenSSH for consistent SSH behavior on Windows
 [core]
     sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
 {{- end }}
 
 {{- if .is_wsl }}
 
-# On WSL, use Windows OpenSSH to leverage Windows 1Password agent
+# On WSL, use Windows OpenSSH for a shared SSH configuration
 [core]
     sshCommand = ssh.exe
 {{- end }}

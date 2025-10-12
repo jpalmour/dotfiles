@@ -1,20 +1,17 @@
 Host *
   ServerAliveInterval 60
   ServerAliveCountMax 2
-{{- if and (eq .chezmoi.os "linux") (not .is_wsl) }}
-  IdentityAgent {{ printf "/run/user/%s/1password/agent.sock" .chezmoi.uid }}
-  IdentitiesOnly yes
-{{- end }}
 {{ if eq .chezmoi.os "darwin" }}
   UseKeychain yes
 {{ end }}
 
-{{ if and .is_work_machine (not .is_wsl) }}
 Host github.com
   HostName github.com
   User git
   IdentitiesOnly yes
-  IdentityFile ~/.ssh/id_ed25519_work
+  IdentityFile ~/.ssh/{{- if and .is_work_machine (not .is_wsl) -}}id_ed25519_work{{- else -}}id_ed25519_dev{{- end }}
+
+{{- if and .is_work_machine (not .is_wsl) }}
 
 Host github-personal.com
   HostName github.com
@@ -22,7 +19,7 @@ Host github-personal.com
   IdentitiesOnly yes
   IdentityFile ~/.ssh/id_ed25519_dev
 
-{{ end }}
+{{- end }}
 {{ if .is_wsl }}
 {{ output "op.exe" "read" "op://Private/ssh-hosts/hosts" }}
 {{ else }}
