@@ -1,6 +1,10 @@
 Host *
   ServerAliveInterval 60
   ServerAliveCountMax 2
+{{- if and (eq .chezmoi.os "linux") (not .is_wsl) }}
+  IdentityAgent {{ printf "/run/user/%s/1password/agent.sock" .chezmoi.uid }}
+  IdentitiesOnly yes
+{{- end }}
 {{ if eq .chezmoi.os "darwin" }}
   UseKeychain yes
 {{ end }}

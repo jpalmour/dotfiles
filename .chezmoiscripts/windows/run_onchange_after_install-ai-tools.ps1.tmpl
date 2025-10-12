@@ -1,7 +1,9 @@
 $ErrorActionPreference = "Stop"
 Write-Output "Installing/upgrading AI CLI tools via npm..."
 
-# Use current default node version
+# Use the default node version
+nvm use default
+
 {{- if .is_work_machine }}
 npm install -g @anthropic-ai/claude-code
 {{- else }}

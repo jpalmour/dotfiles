@@ -7,7 +7,7 @@ fi
 
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
-  nvm install --lts
-  # Set LTS as the default version
-  nvm alias default "lts/*"
+  nvm install {{ .node_major_version }}
+  # Set pinned major version as the default
+  nvm alias default {{ .node_major_version }}
 fi

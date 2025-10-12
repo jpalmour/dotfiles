@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# Load nvm and use current default version
+# Load nvm and use the default version
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
+  nvm use default
 fi
 
 # Install/upgrade AI CLI tools

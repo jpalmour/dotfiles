@@ -6,6 +6,8 @@ Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/).
 
 Install chezmoi and apply dotfiles in one command:
 
+### Linux/MacOS (bash)
+
 ```bash
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ```
@@ -16,31 +18,6 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 winget install twpayne.chezmoi
 chezmoi init --apply jpalmour
 ```
-
-## Daily Usage
-
-- **Pull latest changes**: `chezmoi update`
-- **Navigate to source dir to edit files**: `chezmoi cd`
-- **See what would change**: `chezmoi diff`
-- **Apply changes**: `chezmoi apply`
-
-## Multiple GitHub Accounts
-
-- **Work machines (`.is_work_machine == true`)**:
-  - `github.com` uses your Work SSH key by default.
-  - For personal repositories, clone using the `github-personal.com` host alias:
-    ```bash
-    git clone git@github-personal.com:username/repository.git
-    ```
-- **Non-work machines**: use the standard `github.com` SSH URL for all repositories.
-
-## External Dependencies
-
-This repository uses `.chezmoiexternal.toml` to manage external dependencies like oh-my-zsh, plugins, and themes.
-
-- **Initial setup**: After the first `chezmoi apply`, external files are downloaded automatically
-- **Update externals**: Run `chezmoi --refresh-externals apply` to fetch the latest versions of external dependencies (respects the refresh period set in `.chezmoiexternal.toml`)
-- **Note**: Regular `chezmoi apply` uses cached versions and only refreshes when the period expires (currently set to 168 hours/1 week)
 
 ## Repository Structure
 

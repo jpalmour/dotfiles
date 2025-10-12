@@ -29,7 +29,6 @@ bin/termius-startup-picker.zsh
 {{- if or (not .is_work_machine) (.is_wsl) }}
 .config/1Password/**
 {{- end }}
-
 # Documentation files (not deployed to home directory)
 *.md
 
@@ -47,6 +46,11 @@ bin/termius-startup-picker.zsh
 repos/**
 snap/**
 .config/**
+
+{{- if and (eq .chezmoi.os "linux") (not .is_wsl) }}
+!.config/environment.d/
+!.config/environment.d/10-1password-agent.conf
+{{- end }}
 
 # Ignore user data dirs
 Desktop/**

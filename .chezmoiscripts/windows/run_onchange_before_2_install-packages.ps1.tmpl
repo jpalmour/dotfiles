@@ -2,12 +2,12 @@ $ErrorActionPreference = 'Stop'
 
 function Ensure-PackageProvider {
     param([string]$Name, [Version]$MinimumVersion)
-    
+
     # PackageProvider is only needed in Windows PowerShell 5.1, not in PowerShell 7+
     if ($PSVersionTable.PSVersion.Major -ge 7) {
         return
     }
-    
+
     try {
         $provider = Get-PackageProvider -Name $Name -ErrorAction SilentlyContinue
         if (-not $provider -or $provider.Version -lt $MinimumVersion) {
@@ -43,21 +43,21 @@ function Ensure-Module {
 
         if ($needsInstall) {
             Write-Host ("[ACTION] Installing PowerShell module '{0}'..." -f $Name)
-            $installParams = @{ 
+            $installParams = @{
                 Name = $Name
                 Scope = 'CurrentUser'
                 Force = $true
                 AllowClobber = $true
             }
             if ($MinimumVersion) { $installParams['MinimumVersion'] = $MinimumVersion }
-            
+
             # Try with SkipPublisherCheck if available (PowerShell 7+)
             if ($PSVersionTable.PSVersion.Major -ge 7) {
                 $installParams['SkipPublisherCheck'] = $true
             }
-            
+
             Install-Module @installParams -ErrorAction Stop
-            
+
             # Verify the module can be imported
             Import-Module -Name $Name -ErrorAction Stop
             Write-Host ("[OK] Installed PowerShell module '{0}'." -f $Name)
@@ -67,36 +67,6 @@ function Ensure-Module {
     } catch {
         Write-Host ("[ERROR] Failed to install PowerShell module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Red
         Write-Host ("        Run 'Install-Module -Name {0} -Scope CurrentUser -Force' manually to diagnose." -f $Name) -ForegroundColor Yellow
-    }
-}
-
-function Add-ToUserPath {
-    param([string]$Directory)
-    
-    if (-not (Test-Path $Directory)) {
-        Write-Host "[WARN] Directory does not exist, cannot add to PATH: $Directory" -ForegroundColor Yellow
-        return
-    }
-
-    # Get current user PATH
-    $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-    $pathParts = $userPath -split ';' | Where-Object { $_ -ne '' }
-    
-    # Check if directory is already in PATH (case-insensitive)
-    $normalizedDir = $Directory.TrimEnd('\')
-    $alreadyInPath = $pathParts | Where-Object { $_.TrimEnd('\') -eq $normalizedDir }
-    
-    if (-not $alreadyInPath) {
-        # Add to PATH permanently for current user
-        $newPath = (@($pathParts) + $normalizedDir) -join ';'
-        [Environment]::SetEnvironmentVariable('Path', $newPath, 'User')
-        
-        # Also update current session
-        $env:Path = "$env:Path;$normalizedDir"
-        
-        Write-Host "[OK] Added to user PATH: $normalizedDir"
-    } else {
-        Write-Host "[INFO] Already in user PATH: $normalizedDir"
     }
 }
 
@@ -128,6 +98,31 @@ function Test-CaskaydiaFont {
     return $false
 }
 
+function Install-PowerShellModules {
+    Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
+    Ensure-Module -Name 'PSReadLine' -MinimumVersion '2.2.6'
+    Ensure-Module -Name 'posh-git' -MinimumVersion '1.1.0'
+    Ensure-Module -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
+
+    if (-not (Test-CaskaydiaFont)) {
+        Write-Host "[WARN] CaskaydiaCove Nerd Font not detected. Download 'Caskaydia Cove' from https://www.nerdfonts.com/font-downloads, then right-click 'CaskaydiaCoveNerdFontMono-Regular.ttf' > Show more options > Install for all users, and set Windows Terminal to use 'CaskaydiaCove NF'."
+    }
+}
+
+function Test-PackageInstalled {
+    param([string]$PackageId)
+
+    $output = winget list --id $PackageId --exact --source winget --accept-source-agreements --accept-package-agreements 2>&1 | Out-String
+
+    # Check if command succeeded and output contains the package ID
+    return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
+}
+
+# Post-install handlers for packages that need special setup
+$postInstallHandlers = @{
+    'Microsoft.PowerShell' = { Install-PowerShellModules }
+}
+
 $packages = @(
     "BurntSushi.ripgrep.MSVC"
     "Docker.DockerDesktop"
@@ -151,92 +146,18 @@ $packages += "Anthropic.Claude"
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
     Write-Host "=== $pkg ==="
 
-    $existingJson = winget list --id $pkg --exact --source winget --accept-source-agreements --accept-package-agreements --output json 2>$null
-    $installed = $false
-
-    if ($LASTEXITCODE -eq 0 -and $existingJson) {
-        try {
-            $existing = $existingJson | ConvertFrom-Json -ErrorAction Stop
-
-            $records = @()
-
-            if ($existing) {
-                if ($existing -is [System.Collections.IEnumerable] -and -not ($existing -is [string])) {
-                    $records += $existing
-                }
-
-                $propertyNames = @('Data', 'Records', 'Results', 'Sources', 'SourcesAndPackages', 'Packages', 'Installed', 'Values', 'Items')
-                foreach ($prop in $propertyNames) {
-                    if ($existing.PSObject.Properties.Name -contains $prop) {
-                        $value = $existing.$prop
-                        if ($value) {
-                            if ($value -is [System.Collections.IEnumerable] -and -not ($value -is [string])) {
-                                $records += $value
-                            } else {
-                                $records += ,$value
-                            }
-                        }
-                    }
-                }
-
-                if (-not $records -and ($existing.PSObject.Properties.Name -contains 'PackageIdentifier' -or $existing.PSObject.Properties.Name -contains 'Id' -or $existing.PSObject.Properties.Name -contains 'Name')) {
-                    $records += $existing
-                }
-
-                foreach ($record in $records) {
-                    if ($null -eq $record) { continue }
-
-                    $identifier = $record.PackageIdentifier
-                    if (-not $identifier -and $record.PSObject.Properties.Name -contains 'Id') {
-                        $identifier = $record.Id
-                    }
-                    if (-not $identifier -and $record.PSObject.Properties.Name -contains 'Name') {
-                        $identifier = $record.Name
-                    }
-                    if (-not $identifier -and $record.PSObject.Properties.Name -contains 'Identifier') {
-                        $identifier = $record.Identifier
-                    }
-
-                    if ($identifier -eq $pkg) {
-                        $installed = $true
-                        break
-                    }
-                }
-            }
-        } catch {
-            Write-Host "[WARN] Unable to parse winget list output for $pkg; attempting installation anyway."
-        }
-    }
-
-    if ($installed) {
+    if (Test-PackageInstalled -PackageId $pkg) {
         Write-Host "[INFO] $pkg already installed; skipping."
-        if ($pkg -eq 'Microsoft.PowerShell') {
-            Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
-            Ensure-Module -Name 'PSReadLine' -MinimumVersion '2.2.6'
-            Ensure-Module -Name 'posh-git' -MinimumVersion '1.1.0'
-            Ensure-Module -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
-        }
-        if ($pkg -eq 'vim.vim') {
-            # Ensure Vim is in PATH even if already installed
-            $vimPath = "${env:ProgramFiles}\Vim\vim91"
-            if (Test-Path $vimPath) {
-                Add-ToUserPath -Directory $vimPath
-            } else {
-                # Try to find any vim## directory
-                $vimBaseDir = "${env:ProgramFiles}\Vim"
-                if (Test-Path $vimBaseDir) {
-                    $vimDir = Get-ChildItem -Path $vimBaseDir -Directory -Filter "vim*" | Sort-Object Name -Descending | Select-Object -First 1
-                    if ($vimDir) {
-                        Add-ToUserPath -Directory $vimDir.FullName
-                    }
-                }
-            }
+
+        # Run post-install handler even if already installed (ensures config is up to date)
+        if ($postInstallHandlers.ContainsKey($pkg)) {
+            & $postInstallHandlers[$pkg]
         }
         continue
     }
 
     Write-Host "[ACTION] Installing $pkg..."
-    
+
     # Special handling for PowerShell - uninstall old version if install technology differs
     if ($pkg -eq 'Microsoft.PowerShell') {
         $installResult = winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent 2>&1
@@ -251,34 +172,8 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
         winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
     }
 
-    if ($pkg -eq 'Microsoft.PowerShell') {
-        Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
-        Ensure-Module -Name 'PSReadLine' -MinimumVersion '2.2.6'
-        Ensure-Module -Name 'posh-git' -MinimumVersion '1.1.0'
-        Ensure-Module -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
-        if (-not (Test-CaskaydiaFont)) {
-            Write-Host "[WARN] CaskaydiaCove Nerd Font not detected. Download 'Caskaydia Cove' from https://www.nerdfonts.com/font-downloads, then right-click 'CaskaydiaCoveNerdFontMono-Regular.ttf' > Show more options > Install for all users, and set Windows Terminal to use 'CaskaydiaCove NF'."
-        }
-    }
-    
-    if ($pkg -eq 'vim.vim') {
-        # Add Vim to PATH after installation
-        $vimPath = "${env:ProgramFiles}\Vim\vim91"
-        if (Test-Path $vimPath) {
-            Add-ToUserPath -Directory $vimPath
-        } else {
-            # Try to find any vim## directory
-            $vimBaseDir = "${env:ProgramFiles}\Vim"
-            if (Test-Path $vimBaseDir) {
-                $vimDir = Get-ChildItem -Path $vimBaseDir -Directory -Filter "vim*" | Sort-Object Name -Descending | Select-Object -First 1
-                if ($vimDir) {
-                    Add-ToUserPath -Directory $vimDir.FullName
-                } else {
-                    Write-Host "[WARN] Vim installed but vim directory not found in $vimBaseDir" -ForegroundColor Yellow
-                }
-            } else {
-                Write-Host "[WARN] Vim installed but $vimBaseDir does not exist" -ForegroundColor Yellow
-            }
-        }
+    # Run post-install handler if defined
+    if ($postInstallHandlers.ContainsKey($pkg)) {
+        & $postInstallHandlers[$pkg]
     }
 }
