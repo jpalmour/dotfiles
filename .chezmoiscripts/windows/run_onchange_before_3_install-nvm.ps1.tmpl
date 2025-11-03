@@ -1,7 +1,31 @@
 $ErrorActionPreference = 'Stop'
 
-if (-not (Get-Command nvm -ErrorAction SilentlyContinue)) {
-    winget install -e --id CoreyButler.NVMforWindows --accept-source-agreements --accept-package-agreements --silent
+function Test-PackageInstalled {
+    param([string]$PackageId)
+    $output = winget list --id $PackageId --exact --accept-source-agreements 2>&1 | Out-String
+    return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
+}
+
+function Test-PackageUpgradeAvailable {
+    param([string]$PackageId)
+    $output = winget upgrade --id $PackageId --exact --source winget --accept-source-agreements 2>&1 | Out-String
+    return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
+}
+
+$packageId = 'CoreyButler.NVMforWindows'
+$isInstalled = Test-PackageInstalled -PackageId $packageId
+
+if ($isInstalled) {
+    $upgradeAvailable = Test-PackageUpgradeAvailable -PackageId $packageId
+    if ($upgradeAvailable) {
+        Write-Host "Upgrading NVM for Windows..."
+        winget upgrade -e --id $packageId --accept-source-agreements --accept-package-agreements --silent
+    } else {
+        Write-Host "NVM for Windows already installed and up-to-date."
+    }
+} else {
+    Write-Host "Installing NVM for Windows..."
+    winget install -e --id $packageId --accept-source-agreements --accept-package-agreements --silent
 }
 
 nvm install {{ .node_major_version }}

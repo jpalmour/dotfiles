@@ -112,9 +112,20 @@ function Install-PowerShellModules {
 function Test-PackageInstalled {
     param([string]$PackageId)
 
-    $output = winget list --id $PackageId --exact --source winget --accept-source-agreements --accept-package-agreements 2>&1 | Out-String
+    $output = winget list --id $PackageId --exact --accept-source-agreements 2>&1 | Out-String
 
     # Check if command succeeded and output contains the package ID
+    return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
+}
+
+function Test-PackageUpgradeAvailable {
+    param([string]$PackageId)
+
+    # Use winget upgrade to check if an upgrade is available for this specific package
+    $output = winget upgrade --id $PackageId --exact --source winget --accept-source-agreements 2>&1 | Out-String
+
+    # If the package appears in the upgrade list, an upgrade is available
+    # The output will contain the package ID if an upgrade exists
     return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
 }
 
@@ -146,8 +157,18 @@ $packages += "Anthropic.Claude"
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
     Write-Host "=== $pkg ==="
 
-    if (Test-PackageInstalled -PackageId $pkg) {
-        Write-Host "[INFO] $pkg already installed; skipping."
+    $isInstalled = Test-PackageInstalled -PackageId $pkg
+
+    if ($isInstalled) {
+        # Check if an upgrade is available
+        $upgradeAvailable = Test-PackageUpgradeAvailable -PackageId $pkg
+
+        if ($upgradeAvailable) {
+            Write-Host "[ACTION] Upgrading $pkg to latest version..."
+            winget upgrade -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+        } else {
+            Write-Host "[INFO] $pkg already installed and up-to-date; skipping."
+        }
 
         # Run post-install handler even if already installed (ensures config is up to date)
         if ($postInstallHandlers.ContainsKey($pkg)) {
