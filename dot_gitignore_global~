@@ -1,4 +1,0 @@
-# Ignore AI scratchpad directory at the root of any repo
-/.ai/
-
-/.claude/settings.local.json
