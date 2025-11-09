@@ -1,6 +1,4 @@
 # Ignore AI scratchpad directory at the root of any repo
 /.ai/
 
-# Ignore local Claude configuration
 /.claude/settings.local.json
-.CLAUDE.local.md
