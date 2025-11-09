@@ -7,10 +7,11 @@ if [ -s "$HOME/.nvm/nvm.sh" ]; then
   nvm use default
 fi
 
-# Install/upgrade AI CLI tools
-{{- if .is_work_machine }}
-npm install -g @anthropic-ai/claude-code
-{{- else }}
-npm install -g @openai/codex @anthropic-ai/claude-code @google/gemini-cli @google/jules
+# Install or update Claude Code via native installer
+curl -fsSL https://claude.ai/install.sh | bash
+
+# Install/upgrade additional AI CLI tools
+{{- if not .is_work_machine }}
+npm install -g @openai/codex @google/gemini-cli @google/jules
 {{- end }}
 

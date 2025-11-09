@@ -1,6 +1,16 @@
 # PowerShell profile (current user, all hosts)
 # Ensures core productivity modules and Oh My Posh prompt are available.
 
+$localBin = Join-Path $HOME ".local\bin"
+if (-not (Test-Path $localBin)) {
+    New-Item -ItemType Directory -Path $localBin -Force | Out-Null
+}
+
+$pathEntries = $env:Path -split ';'
+if (-not ($pathEntries | Where-Object { $_.TrimEnd('\') -ieq $localBin })) {
+    $env:Path = "$localBin;$env:Path"
+}
+
 # Load essential modules if present. Missing modules are non-fatal; install script handles setup.
 foreach ($moduleName in @('PSReadLine', 'posh-git', 'Terminal-Icons')) {
     try {
