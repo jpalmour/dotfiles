@@ -12,12 +12,16 @@ Install chezmoi and apply dotfiles in one command:
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ```
 
-### Windows (PowerShell)
+### Windows (pwsh)
 
-```powershell
-winget install twpayne.chezmoi
-chezmoi init --apply jpalmour
-```
+1. Install PowerShell 7 and ChezMoi:
+   ```pwsh
+   winget install Microsoft.PowerShell twpayne.chezmoi
+   ```
+2. In a new `pwsh` session, apply this repo:
+   ```pwsh
+   chezmoi init --apply jpalmour
+   ```
 
 ## Repository Structure
 

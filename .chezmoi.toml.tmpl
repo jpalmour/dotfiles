@@ -7,6 +7,11 @@
 {{- $defaultNodeVersion := "22.11.0" -}}
 {{- $nodeVersion := promptString `Node.js version (major.minor.patch)` $defaultNodeVersion -}}
 
+[interpreters]
+  [interpreters.ps1]
+    command = "pwsh"
+    args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-File"]
+
 [data]
   personal_email = "{{ promptString `Personal email (for global git, SSH key comment)` `jpalmour@gmail.com` }}"
   work_email     = "{{ promptString `Work email (leave blank if none)` `` }}"
@@ -75,7 +80,6 @@
     "Google.Chrome",
     "JanDeDobbeleer.OhMyPosh",
     "jqlang.jq",
-    "Microsoft.PowerShell",
     "Microsoft.WindowsTerminal",
     "Postman.Postman",
     "SlackTechnologies.Slack",
