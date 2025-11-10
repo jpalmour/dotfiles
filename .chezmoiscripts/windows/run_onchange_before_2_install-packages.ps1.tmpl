@@ -1,35 +1,243 @@
 $ErrorActionPreference = 'Stop'
 
-function Ensure-PackageManagementModule {
-    if (Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue) {
+function Get-CurrentUserModulesPath {
+    $moduleRoot = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules'
+    if (-not (Test-Path $moduleRoot)) {
+        Write-Host "[DEBUG] Creating user modules directory at $moduleRoot"
+        New-Item -ItemType Directory -Path $moduleRoot -Force | Out-Null
+    }
+    return $moduleRoot
+}
+
+function Install-ModuleFromNuPkg {
+    param(
+        [Parameter(Mandatory)] [string]$ModuleName,
+        [Parameter(Mandatory)] [string]$Version
+    )
+
+    $modulesRoot = Get-CurrentUserModulesPath
+    $targetPath = Join-Path $modulesRoot (Join-Path $ModuleName $Version)
+    $expectedManifest = Join-Path $targetPath "$ModuleName.psd1"
+    if (Test-Path $expectedManifest) {
+        Write-Host ("[DEBUG] Module '{0}' version '{1}' already exists at '{2}'." -f $ModuleName, $Version, $targetPath)
         return $true
     }
 
-    $module = Get-Module -ListAvailable -Name PackageManagement | Sort-Object Version -Descending | Select-Object -First 1
-    if (-not $module) {
-        Write-Host "[WARN] PowerShell module 'PackageManagement' not found. Install it with 'Install-Module -Name PackageManagement -Scope CurrentUser -Force' and rerun this script."
-        return $false
-    }
+    $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("chezmoi-module-{0}-{1}-{2}" -f $ModuleName, $Version, ([guid]::NewGuid().ToString()))
+    New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 
+    $nupkgPath = Join-Path $tempRoot "$ModuleName.$Version.nupkg"
+    $extractPath = Join-Path $tempRoot 'extracted'
     try {
-        Import-Module -Name PackageManagement -ErrorAction Stop
+        $downloadUri = "https://www.powershellgallery.com/api/v2/package/$ModuleName/$Version"
+        Write-Host ("[ACTION] Downloading module '{0}' ({1}) from PowerShell Gallery..." -f $ModuleName, $Version)
+        if ([System.Type]::GetType("System.Net.ServicePointManager")) {
+            $currentProtocols = [Net.ServicePointManager]::SecurityProtocol
+            $requiredProtocol = [Net.SecurityProtocolType]::Tls12
+            if (($currentProtocols -band $requiredProtocol) -eq 0) {
+                [Net.ServicePointManager]::SecurityProtocol = $currentProtocols -bor $requiredProtocol
+            }
+        }
+        Invoke-WebRequest -Uri $downloadUri -OutFile $nupkgPath -UseBasicParsing -ErrorAction Stop
+
+        if (-not ("System.IO.Compression.ZipFile" -as [type])) {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+        }
+
+        [IO.Compression.ZipFile]::ExtractToDirectory($nupkgPath, $extractPath)
+
+        $manifest = Get-ChildItem -Path $extractPath -Recurse -Filter "$ModuleName.psd1" -ErrorAction SilentlyContinue | Select-Object -First 1
+        if (-not $manifest) {
+            Write-Host ("[WARN] Unable to locate manifest for module '{0}' in downloaded package." -f $ModuleName)
+            return $false
+        }
+        Write-Host ("[DEBUG] Located manifest for module '{0}' under '{1}'." -f $ModuleName, $manifest.Directory.FullName)
+
+        $sourcePath = $manifest.Directory.FullName
+        New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+        Copy-Item -Path (Join-Path $sourcePath '*') -Destination $targetPath -Recurse -Force
+        Write-Host ("[DEBUG] Copied module '{0}' contents to '{1}'." -f $ModuleName, $targetPath)
         return $true
     } catch {
-        Write-Host ("[WARN] Failed to import module 'PackageManagement': {0}" -f $_.Exception.Message)
-        Write-Host "[WARN] Run 'Install-Module -Name PackageManagement -Scope CurrentUser -Force' to install the latest version, then rerun this script."
+        Write-Host ("[WARN] Failed to download or extract module '{0}' ({1}): {2}" -f $ModuleName, $Version, $_.Exception.Message)
+        return $false
+    } finally {
+        Remove-Item -Path $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Ensure-ModuleAvailability {
+    param(
+        [Parameter(Mandatory)] [string]$ModuleName,
+        [string]$MinimumVersion,
+        [string]$ManualFallbackVersion
+    )
+
+    $requiredVersion = $null
+    if ($MinimumVersion) {
+        $requiredVersion = [Version]$MinimumVersion
+    }
+
+    $module = Get-Module -ListAvailable -Name $ModuleName | Sort-Object Version -Descending | Select-Object -First 1
+    if ($module -and ($requiredVersion -eq $null -or [Version]$module.Version -ge $requiredVersion)) {
+        Write-Host ("[DEBUG] Module '{0}' already satisfies requirement (v{1})." -f $ModuleName, $module.Version)
+        return $true
+    }
+
+    $installErrors = @()
+    Write-Host ("[DEBUG] Module '{0}' missing or below required version '{1}'. Attempting installation paths." -f $ModuleName, ($MinimumVersion ?? 'unspecified'))
+
+    if (Get-Command -Name Install-Module -ErrorAction SilentlyContinue) {
+        $installParams = @{
+            Name = $ModuleName
+            Scope = 'CurrentUser'
+            Force = $true
+            AllowClobber = $true
+        }
+        if ($MinimumVersion) {
+            $installParams['MinimumVersion'] = $MinimumVersion
+        }
+
+        try {
+            Write-Host ("[DEBUG] Attempting Install-Module for '{0}'." -f $ModuleName)
+            Install-Module @installParams -ErrorAction Stop
+        } catch {
+            Write-Host ("[DEBUG] Install-Module for '{0}' failed: {1}" -f $ModuleName, $_.Exception.Message)
+            $installErrors += $_
+        }
+    } else {
+        Write-Host "[DEBUG] Install-Module command unavailable in this session."
+    }
+
+    if (-not (Get-Module -ListAvailable -Name $ModuleName | Sort-Object Version -Descending | Select-Object -First 1) -and (Get-Command -Name Install-PSResource -ErrorAction SilentlyContinue)) {
+        $psResourceParams = @{
+            Name = $ModuleName
+            Scope = 'CurrentUser'
+            TrustRepository = $true
+        }
+        if ($MinimumVersion) {
+            $psResourceParams['Version'] = $MinimumVersion
+        }
+
+        try {
+            Write-Host ("[DEBUG] Attempting Install-PSResource for '{0}'." -f $ModuleName)
+            Install-PSResource @psResourceParams -ErrorAction Stop
+        } catch {
+            Write-Host ("[DEBUG] Install-PSResource for '{0}' failed: {1}" -f $ModuleName, $_.Exception.Message)
+            $installErrors += $_
+        }
+    } else {
+        if (-not (Get-Command -Name Install-PSResource -ErrorAction SilentlyContinue)) {
+            Write-Host "[DEBUG] Install-PSResource command unavailable in this session."
+        }
+    }
+
+    $module = Get-Module -ListAvailable -Name $ModuleName | Sort-Object Version -Descending | Select-Object -First 1
+    if ($module -and ($requiredVersion -eq $null -or [Version]$module.Version -ge $requiredVersion)) {
+        Write-Host ("[DEBUG] Module '{0}' available after gallery install path (v{1})." -f $ModuleName, $module.Version)
+        return $true
+    }
+
+    if ($ManualFallbackVersion) {
+        Write-Host ("[DEBUG] Attempting manual NuGet fallback for '{0}' version '{1}'." -f $ModuleName, $ManualFallbackVersion)
+        if (Install-ModuleFromNuPkg -ModuleName $ModuleName -Version $ManualFallbackVersion) {
+            $module = Get-Module -ListAvailable -Name $ModuleName | Sort-Object Version -Descending | Select-Object -First 1
+            if ($module -and ($requiredVersion -eq $null -or [Version]$module.Version -ge $requiredVersion)) {
+                Write-Host ("[DEBUG] Manual fallback succeeded for '{0}' (v{1})." -f $ModuleName, $module.Version)
+                return $true
+            }
+        }
+    }
+
+    foreach ($err in $installErrors) {
+        Write-Host ("[VERBOSE] Failed attempt to install module '{0}': {1}" -f $ModuleName, $err.Exception.Message) -ForegroundColor DarkGray
+    }
+
+    Write-Host ("[WARN] Module '{0}' with minimum version '{1}' is unavailable. Install it manually and rerun." -f $ModuleName, ($MinimumVersion ?? 'unspecified'))
+    return $false
+}
+
+function Import-ModuleWithCompatibility {
+    param(
+        [Parameter(Mandatory)] [string]$ModuleName,
+        [switch]$AllowWindowsCompatibility
+    )
+
+    try {
+        Write-Host ("[DEBUG] Importing module '{0}' directly." -f $ModuleName)
+        Import-Module -Name $ModuleName -ErrorAction Stop
+        return $true
+    } catch {
+        if ($AllowWindowsCompatibility -and $IsWindows) {
+            try {
+                Write-Host ("[DEBUG] Direct import failed; trying compatibility import for '{0}'." -f $ModuleName)
+                Import-Module -Name $ModuleName -UseWindowsPowerShell -ErrorAction Stop
+                return $true
+            } catch {
+                Write-Host ("[VERBOSE] Compatibility import for module '{0}' failed: {1}" -f $ModuleName, $_.Exception.Message) -ForegroundColor DarkGray
+                return $false
+            }
+        }
+
+        Write-Host ("[VERBOSE] Import for module '{0}' failed: {1}" -f $ModuleName, $_.Exception.Message) -ForegroundColor DarkGray
         return $false
     }
+}
+
+function Ensure-PackageManagementModule {
+    if (Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue) {
+        Write-Host "[DEBUG] PackageManagement already available in current session."
+        return $true
+    }
+
+    if (-not (Ensure-ModuleAvailability -ModuleName 'PackageManagement' -MinimumVersion '1.4.8.1' -ManualFallbackVersion '1.4.8.1')) {
+        return $false
+    }
+
+    $imported = $false
+    foreach ($compat in @( $false, $true )) {
+        Write-Host ("[DEBUG] Attempting PackageManagement import (compatibility={0})." -f $compat)
+        if (Import-ModuleWithCompatibility -ModuleName 'PackageManagement' -AllowWindowsCompatibility:$compat) {
+            if (Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue) {
+                Write-Host "[DEBUG] PackageManagement import succeeded."
+                $imported = $true
+                break
+            }
+        }
+    }
+
+    if (-not $imported) {
+        Write-Host "[WARN] PowerShell module 'PackageManagement' could not be imported; module installations may fail."
+        return $false
+    }
+
+    return $true
+}
+
+function Ensure-PowerShellGetModule {
+    if (-not (Ensure-ModuleAvailability -ModuleName 'PowerShellGet' -MinimumVersion '2.2.5' -ManualFallbackVersion '2.2.5')) {
+        return $false
+    }
+
+    if (-not (Import-ModuleWithCompatibility -ModuleName 'PowerShellGet' -AllowWindowsCompatibility:$true)) {
+        Write-Host "[WARN] PowerShell module 'PowerShellGet' could not be imported."
+        return $false
+    }
+
+    Write-Host "[DEBUG] PowerShellGet import succeeded."
+    return $true
 }
 
 function Ensure-PackageProvider {
     param([string]$Name, [Version]$MinimumVersion)
 
     if (-not (Ensure-PackageManagementModule)) {
+        Write-Host ("[WARN] Skipping package provider '{0}' because PackageManagement is unavailable." -f $Name)
         return
     }
 
-    # PackageProvider is only needed in Windows PowerShell 5.1, not in PowerShell 7+
-    if ($PSVersionTable.PSVersion.Major -ge 7) {
+    if (-not (Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)) {
+        Write-Host ("[WARN] Skipping package provider '{0}' because 'Get-PackageProvider' is unavailable." -f $Name)
         return
     }
 
@@ -68,26 +276,17 @@ function Ensure-Module {
 
         if ($needsInstall) {
             Write-Host ("[ACTION] Installing PowerShell module '{0}'..." -f $Name)
-            $installParams = @{
-                Name = $Name
-                Scope = 'CurrentUser'
-                Force = $true
-                AllowClobber = $true
+            if (-not (Ensure-ModuleAvailability -ModuleName $Name -MinimumVersion $MinimumVersion)) {
+                throw "Unable to install module '$Name'."
             }
-            if ($MinimumVersion) { $installParams['MinimumVersion'] = $MinimumVersion }
-
-            # Try with SkipPublisherCheck if available (PowerShell 7+)
-            if ($PSVersionTable.PSVersion.Major -ge 7) {
-                $installParams['SkipPublisherCheck'] = $true
-            }
-
-            Install-Module @installParams -ErrorAction Stop
-
-            # Verify the module can be imported
             Import-Module -Name $Name -ErrorAction Stop
             Write-Host ("[OK] Installed PowerShell module '{0}'." -f $Name)
         } else {
             Write-Host ("[INFO] PowerShell module '{0}' already present (v{1})." -f $Name, $module.Version)
+            if (-not (Get-Module -Name $Name)) {
+                Write-Host ("[DEBUG] Importing already-present module '{0}' into session." -f $Name)
+                Import-Module -Name $Name -ErrorAction Stop
+            }
         }
     } catch {
         Write-Host ("[ERROR] Failed to install PowerShell module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Red
@@ -100,14 +299,24 @@ function Ensure-GetFileHash {
         return $true
     }
 
-    try {
-        Import-Module -Name Microsoft.PowerShell.Utility -ErrorAction Stop
-        return $true
-    } catch {
-        Write-Host ("[ERROR] Required PowerShell command 'Get-FileHash' is unavailable: {0}" -f $_.Exception.Message) -ForegroundColor Red
-        Write-Host "[ERROR] Install or repair the 'Microsoft.PowerShell.Utility' module (built-in on Windows) and rerun this script."
-        return $false
+    if (Import-ModuleWithCompatibility -ModuleName 'Microsoft.PowerShell.Utility' -AllowWindowsCompatibility:$true) {
+        if (Get-Command -Name Get-FileHash -ErrorAction SilentlyContinue) {
+            try {
+                $tempFile = [IO.Path]::GetTempFileName()
+                try {
+                    Get-FileHash -Path $tempFile -Algorithm SHA256 | Out-Null
+                    return $true
+                } finally {
+                    Remove-Item -Path $tempFile -Force -ErrorAction SilentlyContinue
+                }
+            } catch {
+                Write-Host ("[WARN] 'Get-FileHash' succeeded to import but failed to execute: {0}" -f $_.Exception.Message)
+            }
+        }
     }
+
+    Write-Host "[ERROR] Required PowerShell command 'Get-FileHash' is unavailable even after attempting to import 'Microsoft.PowerShell.Utility'. Install or repair PowerShell and rerun." -ForegroundColor Red
+    return $false
 }
 
 function Test-CaskaydiaFont {
@@ -139,11 +348,18 @@ function Test-CaskaydiaFont {
 }
 
 function Install-PowerShellModules {
-    if (-not (Ensure-PackageManagementModule)) {
-        return
+    $packageManagementReady = Ensure-PackageManagementModule
+    if ($packageManagementReady) {
+        Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
+    } else {
+        Write-Host "[WARN] Proceeding without PackageManagement; relying on alternative module installers."
     }
 
-    Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
+    if (-not (Ensure-PowerShellGetModule)) {
+        Write-Host "[WARN] PowerShellGet unavailable; module installs will try using PSResourceGet or manual fallback."
+    }
+
+    Write-Host "[DEBUG] Ensuring core modules: PSReadLine, posh-git, Terminal-Icons."
     Ensure-Module -Name 'PSReadLine' -MinimumVersion '2.2.6'
     Ensure-Module -Name 'posh-git' -MinimumVersion '1.1.0'
     Ensure-Module -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
