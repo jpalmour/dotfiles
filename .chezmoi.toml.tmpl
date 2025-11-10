@@ -4,13 +4,20 @@
 {{-   $wsl = true -}}
 {{   end }}
 {{ end }}
+{{- $defaultNodeVersion := "22.11.0" -}}
+{{- $nodeVersion := promptString `Node.js version (major.minor.patch)` $defaultNodeVersion -}}
 
 [data]
   personal_email = "{{ promptString `Personal email (for global git, SSH key comment)` `jpalmour@gmail.com` }}"
   work_email     = "{{ promptString `Work email (leave blank if none)` `` }}"
   is_work_machine = {{ promptBool "Is this a WORK machine? (y/N)" false }}
   is_wsl = {{ $wsl }}
-  node_major_version = "22"
+  node_version = "{{ $nodeVersion }}"
+  non_work_npm_global_tools = [
+    "@openai/codex",
+    "@google/gemini-cli",
+    "@google/jules",
+  ]
   zshPlugins = [
     "git",
     "docker",

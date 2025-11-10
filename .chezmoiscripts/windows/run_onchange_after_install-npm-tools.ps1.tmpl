@@ -1,0 +1,22 @@
+
+$ErrorActionPreference = "Stop"
+Write-Output "Ensuring pinned Node.js version is active..."
+
+# Use the pinned node version
+nvm use {{ .node_version }}
+
+Write-Output "Installing/upgrading npm-based CLI tools..."
+{{- if not .is_work_machine }}
+$npmGlobalTools = @(
+{{- range .non_work_npm_global_tools }}
+  "{{ . }}"
+{{- end }}
+)
+foreach ($tool in $npmGlobalTools) {
+  npm install -g $tool
+}
+{{- else }}
+Write-Output "Skipping npm global tool installation on work machine."
+{{- end }}
+
+

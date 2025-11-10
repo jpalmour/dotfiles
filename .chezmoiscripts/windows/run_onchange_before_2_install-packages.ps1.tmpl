@@ -198,3 +198,10 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
         & $postInstallHandlers[$pkg]
     }
 }
+
+Write-Host "Installing/upgrading Claude Code via native installer..."
+try {
+  irm https://claude.ai/install.ps1 | iex
+} catch {
+  Write-Host "[WARN] Failed to run Claude Code installer: $($_.Exception.Message)"
+}

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+# Load nvm and use the pinned version
+if [ -s "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+  nvm use {{ .node_version }}
+fi
+
+# Install/upgrade npm CLI tools intended for non-work machines
+{{- if not .is_work_machine }}
+tools=(
+{{- range .non_work_npm_global_tools }}
+  "{{ . }}"
+{{- end }}
+)
+for tool in "${tools[@]}"; do
+  npm install -g "$tool"
+done
+{{- else }}
+echo "Skipping npm global tool installation on work machine."
+{{- end }}
+
+

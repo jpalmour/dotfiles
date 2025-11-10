@@ -7,7 +7,7 @@ fi
 
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   . "$HOME/.nvm/nvm.sh"
-  nvm install {{ .node_major_version }}
-  # Set pinned major version as the default
-  nvm alias default {{ .node_major_version }}
+  nvm install {{ .node_version }}
+  # Set pinned version as the default
+  nvm alias default {{ .node_version }}
 fi

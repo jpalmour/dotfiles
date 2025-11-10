@@ -40,3 +40,8 @@ brew "{{ . }}"
 cask "{{ . }}"
 {{ end -}}
 EOBREW
+
+echo "Installing/upgrading Claude Code via native installer..."
+if ! curl -fsSL https://claude.ai/install.sh | bash; then
+  echo "Warning: Claude Code installer failed." >&2
+fi

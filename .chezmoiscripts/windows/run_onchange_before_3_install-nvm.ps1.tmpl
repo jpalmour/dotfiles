@@ -28,6 +28,8 @@ if ($isInstalled) {
     winget install -e --id $packageId --accept-source-agreements --accept-package-agreements --silent
 }
 
-nvm install {{ .node_major_version }}
-# Set pinned major version as the default (Windows nvm uses 'nvm use' to set default)
-nvm use {{ .node_major_version }}
+# Install and activate the pinned Node.js version
+$nodeVersion = "{{ .node_version }}"
+nvm install $nodeVersion
+nvm use $nodeVersion
+nvm alias default $nodeVersion
