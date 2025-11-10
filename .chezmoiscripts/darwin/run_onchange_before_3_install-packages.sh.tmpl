@@ -9,34 +9,14 @@ elif [ -x /usr/local/bin/brew ]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-{{ $brews := list
-    "coreutils"
-    "curl"
-    "gh"
-    "git"
-    "gnu-sed"
-    "jq"
-    "make"
-    "ripgrep"
-    "tmux"
-    "tree"
-    "vim"
-    "wget"
-    "zsh" -}}
-{{ $casks := list 
-    "1password"
-    "docker"
-    "ghostty"
-    "google-chrome"
-    "postman"
-    "slack"
-    "visual-studio-code" -}}
+{{- $brews := (default (list) .macos_brew_formulae) | sortAlpha | uniq -}}
+{{- $casks := (default (list) .macos_brew_casks) | sortAlpha | uniq -}}
 
 brew bundle --file=/dev/stdin <<'EOBREW'
-{{ range ($brews | sortAlpha | uniq) -}}
+{{ range $brews -}}
 brew "{{ . }}"
 {{ end -}}
-{{ range ($casks | sortAlpha | uniq) -}}
+{{ range $casks -}}
 cask "{{ . }}"
 {{ end -}}
 EOBREW

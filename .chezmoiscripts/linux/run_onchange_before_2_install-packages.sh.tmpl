@@ -2,31 +2,18 @@
 
 set -eufo pipefail
 
-{{ $packages := list 
-    "apt-transport-https"
-    "build-essential"
-    "ca-certificates"
-    "curl"
-    "git"
-    "gnupg"
-    "jq"
-    "lsb-release"
-    "openssh-server"
-    "ripgrep"
-    "tmux"
-    "tree"
-    "vim"
-    "wget"
-    "zsh" -}}
-{{ $snaps := list -}}
-{{ $classicSnaps := list -}}
-{{ if .is_wsl -}}
-{{   $snaps = list "gh" -}}
-{{   $classicSnaps = list -}}
-{{ else -}}
-{{   $snaps = list "chromium" "gh" -}}
-{{   $classicSnaps = list "code" "ghostty" "postman" "slack" -}}
-{{ end -}}
+{{- $packages := (default (list) .linux_apt_packages) | sortAlpha | uniq -}}
+{{- $snapPackagesNonWsl := (default (list) .linux_snap_packages_non_wsl) | sortAlpha | uniq -}}
+{{- $snapPackagesWsl := (default (list) .linux_snap_packages_wsl) | sortAlpha | uniq -}}
+{{- $classicSnapPackagesNonWsl := (default (list) .linux_classic_snap_packages_non_wsl) | sortAlpha | uniq -}}
+{{- $snaps := list -}}
+{{- $classicSnaps := list -}}
+{{- if .is_wsl -}}
+{{-   $snaps = $snapPackagesWsl -}}
+{{- else -}}
+{{-   $snaps = $snapPackagesNonWsl -}}
+{{-   $classicSnaps = $classicSnapPackagesNonWsl -}}
+{{- end -}}
 
 sudo apt-get update
 sudo apt-get install -y {{ $packages | join " " }}

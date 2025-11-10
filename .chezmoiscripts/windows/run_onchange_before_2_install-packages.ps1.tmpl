@@ -1,7 +1,32 @@
 $ErrorActionPreference = 'Stop'
 
+function Ensure-PackageManagementModule {
+    if (Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue) {
+        return $true
+    }
+
+    $module = Get-Module -ListAvailable -Name PackageManagement | Sort-Object Version -Descending | Select-Object -First 1
+    if (-not $module) {
+        Write-Host "[WARN] PowerShell module 'PackageManagement' not found. Install it with 'Install-Module -Name PackageManagement -Scope CurrentUser -Force' and rerun this script."
+        return $false
+    }
+
+    try {
+        Import-Module -Name PackageManagement -ErrorAction Stop
+        return $true
+    } catch {
+        Write-Host ("[WARN] Failed to import module 'PackageManagement': {0}" -f $_.Exception.Message)
+        Write-Host "[WARN] Run 'Install-Module -Name PackageManagement -Scope CurrentUser -Force' to install the latest version, then rerun this script."
+        return $false
+    }
+}
+
 function Ensure-PackageProvider {
     param([string]$Name, [Version]$MinimumVersion)
+
+    if (-not (Ensure-PackageManagementModule)) {
+        return
+    }
 
     # PackageProvider is only needed in Windows PowerShell 5.1, not in PowerShell 7+
     if ($PSVersionTable.PSVersion.Major -ge 7) {
@@ -70,6 +95,21 @@ function Ensure-Module {
     }
 }
 
+function Ensure-GetFileHash {
+    if (Get-Command -Name Get-FileHash -ErrorAction SilentlyContinue) {
+        return $true
+    }
+
+    try {
+        Import-Module -Name Microsoft.PowerShell.Utility -ErrorAction Stop
+        return $true
+    } catch {
+        Write-Host ("[ERROR] Required PowerShell command 'Get-FileHash' is unavailable: {0}" -f $_.Exception.Message) -ForegroundColor Red
+        Write-Host "[ERROR] Install or repair the 'Microsoft.PowerShell.Utility' module (built-in on Windows) and rerun this script."
+        return $false
+    }
+}
+
 function Test-CaskaydiaFont {
     $fontDirs = @(
         (Join-Path $env:WINDIR 'Fonts'),
@@ -99,6 +139,10 @@ function Test-CaskaydiaFont {
 }
 
 function Install-PowerShellModules {
+    if (-not (Ensure-PackageManagementModule)) {
+        return
+    }
+
     Ensure-PackageProvider -Name 'NuGet' -MinimumVersion ([Version]'2.8.5.201')
     Ensure-Module -Name 'PSReadLine' -MinimumVersion '2.2.6'
     Ensure-Module -Name 'posh-git' -MinimumVersion '1.1.0'
@@ -118,40 +162,26 @@ function Test-PackageInstalled {
     return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
 }
 
-function Test-PackageUpgradeAvailable {
-    param([string]$PackageId)
-
-    # Use winget upgrade to check if an upgrade is available for this specific package
-    $output = winget upgrade --id $PackageId --exact --source winget --accept-source-agreements 2>&1 | Out-String
-
-    # If the package appears in the upgrade list, an upgrade is available
-    # The output will contain the package ID if an upgrade exists
-    return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
-}
-
 # Post-install handlers for packages that need special setup
 $postInstallHandlers = @{
     'Microsoft.PowerShell' = { Install-PowerShellModules }
 }
 
+{{- $windowsPackages := (default (list) .windows_winget_packages) | sortAlpha | uniq -}}
+{{- $windowsNonWorkPackages := (default (list) .windows_non_work_winget_packages) | sortAlpha | uniq -}}
+
 $packages = @(
-    "BurntSushi.ripgrep.MSVC"
-    "Docker.DockerDesktop"
-    "Git.Git"
-    "GitHub.cli"
-    "Google.Chrome"
-    "Postman.Postman"
-    "Microsoft.PowerShell"
-    "Microsoft.WindowsTerminal"
-    "SlackTechnologies.Slack"
-    "vim.vim"
-    "JanDeDobbeleer.OhMyPosh"
-    "jqlang.jq"
+{{- range $windowsPackages }}
+    "{{ . }}"
+{{- end }}
 )
 
 {{- if not .is_work_machine }}
-$packages += "OpenAI.ChatGPT"
-$packages += "Anthropic.Claude"
+$packages += @(
+{{- range $windowsNonWorkPackages }}
+    "{{ . }}"
+{{- end }}
+)
 {{- end }}
 
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
@@ -160,15 +190,7 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
     $isInstalled = Test-PackageInstalled -PackageId $pkg
 
     if ($isInstalled) {
-        # Check if an upgrade is available
-        $upgradeAvailable = Test-PackageUpgradeAvailable -PackageId $pkg
-
-        if ($upgradeAvailable) {
-            Write-Host "[ACTION] Upgrading $pkg to latest version..."
-            winget upgrade -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
-        } else {
-            Write-Host "[INFO] $pkg already installed and up-to-date; skipping."
-        }
+        Write-Host "[INFO] $pkg already installed; skipping."
 
         # Run post-install handler even if already installed (ensures config is up to date)
         if ($postInstallHandlers.ContainsKey($pkg)) {
@@ -199,9 +221,13 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
     }
 }
 
-Write-Host "Installing/upgrading Claude Code via native installer..."
-try {
-  irm https://claude.ai/install.ps1 | iex
-} catch {
-  Write-Host "[WARN] Failed to run Claude Code installer: $($_.Exception.Message)"
+if (Ensure-GetFileHash) {
+    Write-Host "Installing/upgrading Claude Code via native installer..."
+    try {
+      irm https://claude.ai/install.ps1 | iex
+    } catch {
+      Write-Host "[WARN] Failed to run Claude Code installer: $($_.Exception.Message)"
+    }
+} else {
+    Write-Host "[WARN] Skipping Claude Code installer because 'Get-FileHash' is unavailable."
 }

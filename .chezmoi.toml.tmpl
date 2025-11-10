@@ -13,14 +13,86 @@
   is_work_machine = {{ promptBool "Is this a WORK machine? (y/N)" false }}
   is_wsl = {{ $wsl }}
   node_version = "{{ $nodeVersion }}"
+  macos_brew_formulae = [
+    "coreutils",
+    "curl",
+    "gh",
+    "git",
+    "gnu-sed",
+    "jq",
+    "make",
+    "ripgrep",
+    "tmux",
+    "tree",
+    "vim",
+    "wget",
+    "zsh",
+  ]
+  macos_brew_casks = [
+    "1password",
+    "docker",
+    "ghostty",
+    "google-chrome",
+    "postman",
+    "slack",
+    "visual-studio-code",
+  ]
+  linux_apt_packages = [
+    "apt-transport-https",
+    "build-essential",
+    "ca-certificates",
+    "curl",
+    "git",
+    "gnupg",
+    "jq",
+    "lsb-release",
+    "openssh-server",
+    "ripgrep",
+    "tmux",
+    "tree",
+    "vim",
+    "wget",
+    "zsh",
+  ]
+  linux_snap_packages_non_wsl = [
+    "chromium",
+    "gh",
+  ]
+  linux_snap_packages_wsl = [
+    "gh",
+  ]
+  linux_classic_snap_packages_non_wsl = [
+    "code",
+    "ghostty",
+    "postman",
+    "slack",
+  ]
+  windows_winget_packages = [
+    "BurntSushi.ripgrep.MSVC",
+    "Docker.DockerDesktop",
+    "Git.Git",
+    "GitHub.cli",
+    "Google.Chrome",
+    "JanDeDobbeleer.OhMyPosh",
+    "jqlang.jq",
+    "Microsoft.PowerShell",
+    "Microsoft.WindowsTerminal",
+    "Postman.Postman",
+    "SlackTechnologies.Slack",
+    "vim.vim",
+  ]
+  windows_non_work_winget_packages = [
+    "Anthropic.Claude",
+    "OpenAI.ChatGPT",
+  ]
   non_work_npm_global_tools = [
-    "@openai/codex",
     "@google/gemini-cli",
     "@google/jules",
+    "@openai/codex",
   ]
   zshPlugins = [
-    "git",
     "docker",
+    "git",
     "npm",
     "tmux",
     "zsh-syntax-highlighting",
