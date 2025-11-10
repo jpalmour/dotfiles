@@ -12,7 +12,8 @@ $hostInfo = [PSCustomObject]@{
 Write-Host "[DEBUG] Chezmoi PowerShell host info (initial):" ($hostInfo | ConvertTo-Json -Compress)
 
 if ($psEdition -ne 'Core' -or $PSVersionTable.PSVersion.Major -lt 7) {
-    $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue)?.Source
+    $pwshCommand = Get-Command pwsh -ErrorAction SilentlyContinue
+    $pwshPath = if ($pwshCommand) { $pwshCommand.Source } else { $null }
     if (-not $pwshPath) {
         Write-Host "[ERROR] pwsh.exe not found on PATH. Install PowerShell 7 and re-run." -ForegroundColor Red
         exit 1
