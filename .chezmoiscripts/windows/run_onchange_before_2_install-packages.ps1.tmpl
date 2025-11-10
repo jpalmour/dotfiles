@@ -167,22 +167,22 @@ $postInstallHandlers = @{
     'Microsoft.PowerShell' = { Install-PowerShellModules }
 }
 
-{{- $windowsPackages := (default (list) .windows_winget_packages) | sortAlpha | uniq -}}
-{{- $windowsNonWorkPackages := (default (list) .windows_non_work_winget_packages) | sortAlpha | uniq -}}
+{{- $windowsPackages := (default (list) .windows_winget_packages) | sortAlpha | uniq }}
+{{- $windowsNonWorkPackages := (default (list) .windows_non_work_winget_packages) | sortAlpha | uniq }}
 
 $packages = @(
 {{- range $windowsPackages }}
     "{{ . }}"
-{{- end }}
+{{ end }}
 )
 
 {{- if not .is_work_machine }}
 $packages += @(
 {{- range $windowsNonWorkPackages }}
     "{{ . }}"
-{{- end }}
+{{ end }}
 )
-{{- end }}
+{{ end }}
 
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
     Write-Host "=== $pkg ==="
