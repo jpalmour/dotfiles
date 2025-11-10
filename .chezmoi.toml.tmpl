@@ -4,8 +4,17 @@
 {{-   $wsl = true -}}
 {{   end }}
 {{ end }}
+{{- $scriptPathLiteral := printf "\"{{ .ScriptPath }}\"" -}}
+{{- $scriptArgsLiteral := printf "\"{{ .ScriptArgs }}\"" -}}
 {{- $defaultNodeVersion := "22.11.0" -}}
 {{- $nodeVersion := promptString `Node.js version (major.minor.patch)` $defaultNodeVersion -}}
+
+[command]
+  defaultShell = ["pwsh", "-NoLogo", "-NoProfile", "-NonInteractive", "-Command"]
+
+[interpreter.powershell]
+  command = "pwsh"
+  args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", "&", {{$scriptPathLiteral}}, {{$scriptArgsLiteral}}]
 
 [data]
   personal_email = "{{ promptString `Personal email (for global git, SSH key comment)` `jpalmour@gmail.com` }}"

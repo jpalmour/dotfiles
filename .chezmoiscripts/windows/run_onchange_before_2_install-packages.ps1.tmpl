@@ -1,3 +1,34 @@
+$effectiveExecutable = (Get-Process -Id $PID | Select-Object -ExpandProperty Path)
+$hostInfo = [PSCustomObject]@{
+    Pid              = $PID
+    EffectiveBinary  = $effectiveExecutable
+    Edition          = $PSVersionTable.PSEdition
+    Version          = $PSVersionTable.PSVersion.ToString()
+    CommandPath      = $PSCommandPath
+    WorkingDirectory = (Get-Location).Path
+}
+Write-Host "[DEBUG] Chezmoi PowerShell host info:" ($hostInfo | ConvertTo-Json -Compress)
+
+$expectedVersion = [Version]"7.5.0"
+if ([Version]$PSVersionTable.PSVersion -lt $expectedVersion) {
+    Write-Host ("[ERROR] PowerShell version {0} detected; require >= {1}. Configure chezmoi to use pwsh {1}+ (see https://www.chezmoi.io/user-guide/machines/windows/)." -f $PSVersionTable.PSVersion, $expectedVersion) -ForegroundColor Red
+    exit 1
+}
+
+$hostInfo = [PSCustomObject]@{
+    ShellPath   = $PSCommandPath
+    Engine      = $PSVersionTable.PSEdition
+    Version     = $PSVersionTable.PSVersion.ToString()
+    Environment = (Get-Process -Id $PID | Select-Object -ExpandProperty Path)
+}
+Write-Host "[DEBUG] ChezMoi PowerShell host:" ($hostInfo | ConvertTo-Json -Compress)
+
+$expectedMajor = 7
+if ($PSVersionTable.PSVersion.Major -lt $expectedMajor) {
+    Write-Host ("[ERROR] PowerShell version {0} detected; require >= {1}. Please configure chezmoi to use pwsh {1}+." -f $PSVersionTable.PSVersion, $expectedMajor) -ForegroundColor Red
+    exit 1
+}
+
 $ErrorActionPreference = 'Stop'
 
 function Get-CurrentUserModulesPath {
@@ -85,7 +116,8 @@ function Ensure-ModuleAvailability {
     }
 
     $installErrors = @()
-    Write-Host ("[DEBUG] Module '{0}' missing or below required version '{1}'. Attempting installation paths." -f $ModuleName, ($MinimumVersion ?? 'unspecified'))
+    $minVersionLabel = if ($MinimumVersion) { $MinimumVersion } else { 'unspecified' }
+    Write-Host ("[DEBUG] Module '{0}' missing or below required version '{1}'. Attempting installation paths." -f $ModuleName, $minVersionLabel)
 
     if (Get-Command -Name Install-Module -ErrorAction SilentlyContinue) {
         $installParams = @{
@@ -153,7 +185,7 @@ function Ensure-ModuleAvailability {
         Write-Host ("[VERBOSE] Failed attempt to install module '{0}': {1}" -f $ModuleName, $err.Exception.Message) -ForegroundColor DarkGray
     }
 
-    Write-Host ("[WARN] Module '{0}' with minimum version '{1}' is unavailable. Install it manually and rerun." -f $ModuleName, ($MinimumVersion ?? 'unspecified'))
+    Write-Host ("[WARN] Module '{0}' with minimum version '{1}' is unavailable. Install it manually and rerun." -f $ModuleName, $minVersionLabel)
     return $false
 }
 
