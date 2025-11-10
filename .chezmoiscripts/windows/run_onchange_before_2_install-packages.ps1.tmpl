@@ -1,79 +1,31 @@
-$initialExecutable = (Get-Process -Id $PID | Select-Object -ExpandProperty Path)
-$hostInfo = [PSCustomObject]@{
-    Pid              = $PID
-    EffectiveBinary  = $initialExecutable
-    Edition          = $PSVersionTable.PSEdition
-    Version          = $PSVersionTable.PSVersion.ToString()
-    CommandPath      = $PSCommandPath
-    WorkingDirectory = (Get-Location).Path
-}
-Write-Host "[DEBUG] Chezmoi PowerShell host info (initial):" ($hostInfo | ConvertTo-Json -Compress)
-
 $ErrorActionPreference = 'Stop'
 
 function Ensure-PowerShellModule {
-    param(
-        [Parameter(Mandatory)][string]$Name,
-        [string]$MinimumVersion
-    )
+    param([Parameter(Mandatory)][string]$Name)
 
     $installed = Get-Module -ListAvailable -Name $Name | Sort-Object Version -Descending | Select-Object -First 1
-    $targetVersion = if ($MinimumVersion) { [Version]$MinimumVersion } else { $null }
-    $needsInstall = -not $installed
-    if (-not $needsInstall -and $targetVersion) {
-        $needsInstall = ([Version]$installed.Version -lt $targetVersion)
-    }
 
-    if ($needsInstall) {
+    if (-not $installed) {
         if (-not (Get-Command -Name Install-Module -ErrorAction SilentlyContinue)) {
-            throw "Install-Module is unavailable. Install PowerShellGet and retry."
+            Write-Host ("[WARN] Install-Module not available; install module '{0}' manually." -f $Name) -ForegroundColor Yellow
+            return
         }
 
         Write-Host ("[ACTION] Installing PowerShell module '{0}'..." -f $Name)
         try {
-            $gallery = Get-PSRepository -Name 'PSGallery' -ErrorAction SilentlyContinue
-            if ($gallery -and $gallery.InstallationPolicy -ne 'Trusted') {
-                Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted -ErrorAction SilentlyContinue
-            }
-        } catch {}
-
-        $params = @{
-            Name = $Name
-            Scope = 'CurrentUser'
-            Force = $true
-            AllowClobber = $true
+            Install-Module -Name $Name -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop | Out-Null
+        } catch {
+            Write-Host ("[ERROR] Failed to install module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Red
+            return
         }
-        if ($MinimumVersion) { $params['MinimumVersion'] = $MinimumVersion }
-        if ($PSVersionTable.PSVersion.Major -ge 7) { $params['SkipPublisherCheck'] = $true }
-
-        Install-Module @params -ErrorAction Stop
     } else {
         Write-Host ("[INFO] PowerShell module '{0}' already present (v{1})." -f $Name, $installed.Version)
     }
 
-    Import-Module -Name $Name -ErrorAction Stop
-}
-
-function Ensure-PackageProvider {
-    param([string]$Name, [string]$MinimumVersion)
-
-    Ensure-PowerShellModule -Name 'PackageManagement' -MinimumVersion '1.4.8.1'
-
-    $provider = Get-PackageProvider -Name $Name -ErrorAction SilentlyContinue
-    $targetVersion = if ($MinimumVersion) { [Version]$MinimumVersion } else { $null }
-    $needsInstall = -not $provider -or ($targetVersion -and [Version]$provider.Version -lt $targetVersion)
-
-    if ($needsInstall) {
-        Write-Host ("[ACTION] Installing package provider '{0}'..." -f $Name)
-        $params = @{
-            Name = $Name
-            Force = $true
-            Scope = 'CurrentUser'
-        }
-        if ($MinimumVersion) { $params['MinimumVersion'] = $MinimumVersion }
-        Install-PackageProvider @params -ErrorAction Stop | Out-Null
-    } else {
-        Write-Host ("[INFO] Package provider '{0}' already available (v{1})." -f $Name, $provider.Version)
+    try {
+        Import-Module -Name $Name -ErrorAction Stop
+    } catch {
+        Write-Host ("[WARN] Failed to import module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Yellow
     }
 }
 
@@ -124,11 +76,11 @@ function Test-CaskaydiaFont {
 }
 
 function Install-PowerShellModules {
-    Ensure-PackageProvider -Name 'NuGet' -MinimumVersion '2.8.5.201'
-    Ensure-PowerShellModule -Name 'PowerShellGet' -MinimumVersion '2.2.5'
-    Ensure-PowerShellModule -Name 'PSReadLine' -MinimumVersion '2.2.6'
-    Ensure-PowerShellModule -Name 'posh-git' -MinimumVersion '1.1.0'
-    Ensure-PowerShellModule -Name 'Terminal-Icons' -MinimumVersion '0.9.0'
+    Ensure-PowerShellModule -Name 'PackageManagement'
+    Ensure-PowerShellModule -Name 'PowerShellGet'
+    Ensure-PowerShellModule -Name 'PSReadLine'
+    Ensure-PowerShellModule -Name 'posh-git'
+    Ensure-PowerShellModule -Name 'Terminal-Icons'
 
     if (-not (Test-CaskaydiaFont)) {
         Write-Host "[WARN] CaskaydiaCove Nerd Font not detected. Download 'Caskaydia Cove' from https://www.nerdfonts.com/font-downloads, then right-click 'CaskaydiaCoveNerdFontMono-Regular.ttf' > Show more options > Install for all users, and set Windows Terminal to use 'CaskaydiaCove NF'."
