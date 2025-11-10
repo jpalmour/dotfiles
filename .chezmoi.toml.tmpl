@@ -7,12 +7,8 @@
 {{- $defaultNodeVersion := "22.11.0" -}}
 {{- $nodeVersion := promptString `Node.js version (major.minor.patch)` $defaultNodeVersion -}}
 
-[shell]
-  command = "pwsh"
-  args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command"]
-
 [interpreter]
-  [interpreter.powershell]
+  [interpreter.ps1]
     command = "pwsh"
     args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-File"]
 

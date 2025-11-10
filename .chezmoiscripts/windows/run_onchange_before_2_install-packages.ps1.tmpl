@@ -1,53 +1,13 @@
 $initialExecutable = (Get-Process -Id $PID | Select-Object -ExpandProperty Path)
-$psEdition = $PSVersionTable.PSEdition
-$psVersion = $PSVersionTable.PSVersion.ToString()
 $hostInfo = [PSCustomObject]@{
     Pid              = $PID
     EffectiveBinary  = $initialExecutable
-    Edition          = $psEdition
-    Version          = $psVersion
+    Edition          = $PSVersionTable.PSEdition
+    Version          = $PSVersionTable.PSVersion.ToString()
     CommandPath      = $PSCommandPath
     WorkingDirectory = (Get-Location).Path
 }
 Write-Host "[DEBUG] Chezmoi PowerShell host info (initial):" ($hostInfo | ConvertTo-Json -Compress)
-
-if ($psEdition -ne 'Core' -or $PSVersionTable.PSVersion.Major -lt 7) {
-    $pwshCommand = Get-Command pwsh -ErrorAction SilentlyContinue
-    $pwshPath = if ($pwshCommand) { $pwshCommand.Source } else { $null }
-    if (-not $pwshPath) {
-        Write-Host "[ERROR] pwsh.exe not found on PATH. Install PowerShell 7 and re-run." -ForegroundColor Red
-        exit 1
-    }
-
-    Write-Host "[INFO] Relaunching under pwsh.exe..."
-    $arguments = @(
-        '-NoLogo'
-        '-NoProfile'
-        '-NonInteractive'
-        '-File'
-        $PSCommandPath
-    )
-
-    if ($PSBoundParameters.Count -gt 0) {
-        foreach ($key in $PSBoundParameters.Keys) {
-            $arguments += "-$key"
-            $value = $PSBoundParameters[$key]
-            if ($null -ne $value -and $value -ne $true -and $value -ne $false) {
-                $arguments += $value
-            }
-        }
-    }
-
-    if ($MyInvocation.UnboundArguments.Count -gt 0) {
-        $arguments += $MyInvocation.UnboundArguments
-    }
-
-    $pwsh = Start-Process -FilePath $pwshPath -ArgumentList $arguments -Wait -PassThru
-    exit $pwsh.ExitCode
-}
-else {
-    Write-Host "[DEBUG] Already running under pwsh $(Get-Command pwsh).Source"
-}
 
 $ErrorActionPreference = 'Stop'
 
