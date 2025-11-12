@@ -36,8 +36,9 @@ if (-not $ompCommand) {
 }
 
 if ($ompCommand) {
+    $ompConfig = Join-Path $HOME '.theme.omp.json'
     try {
-        & $ompCommand.Name init pwsh --config powerlevel10k_classic | Invoke-Expression
+        & $ompCommand.Name init pwsh --config $ompConfig | Invoke-Expression
     } catch {
         Write-Verbose ("Failed to initialize oh-my-posh: {0}" -f $_.Exception.Message)
     }

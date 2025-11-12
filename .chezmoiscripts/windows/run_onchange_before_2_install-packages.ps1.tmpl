@@ -29,24 +29,6 @@ function Ensure-PowerShellModule {
     }
 }
 
-function Ensure-GetFileHash {
-    if (-not (Get-Command -Name Get-FileHash -ErrorAction SilentlyContinue)) {
-        try {
-            Import-Module -Name Microsoft.PowerShell.Utility -ErrorAction Stop
-        } catch {
-            Write-Host ("[ERROR] Failed to import 'Microsoft.PowerShell.Utility': {0}" -f $_.Exception.Message) -ForegroundColor Red
-            return $false
-        }
-    }
-
-    if (-not (Get-Command -Name Get-FileHash -ErrorAction SilentlyContinue)) {
-        Write-Host "[ERROR] Required PowerShell command 'Get-FileHash' is unavailable. Repair the PowerShell installation and rerun." -ForegroundColor Red
-        return $false
-    }
-
-    return $true
-}
-
 function Test-CaskaydiaFont {
     $fontDirs = @(
         (Join-Path $env:WINDIR 'Fonts'),
@@ -96,13 +78,10 @@ function Test-PackageInstalled {
     return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
 }
 
-# Post-install handlers for packages that need special setup
-$postInstallHandlers = @{
-    'Microsoft.PowerShell' = { Install-PowerShellModules }
-}
-
 {{- $windowsPackages := (default (list) .windows_winget_packages) | sortAlpha | uniq }}
 {{- $windowsNonWorkPackages := (default (list) .windows_non_work_winget_packages) | sortAlpha | uniq }}
+
+Install-PowerShellModules
 
 $packages = @(
 {{- range $windowsPackages }}
@@ -125,43 +104,23 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
 
     if ($isInstalled) {
         Write-Host "[INFO] $pkg already installed; skipping."
-
-        # Run post-install handler even if already installed (ensures config is up to date)
-        if ($postInstallHandlers.ContainsKey($pkg)) {
-            & $postInstallHandlers[$pkg]
-        }
         continue
     }
 
     Write-Host "[ACTION] Installing $pkg..."
 
-    # Special handling for PowerShell - uninstall old version if install technology differs
-    if ($pkg -eq 'Microsoft.PowerShell') {
-        $installResult = winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent 2>&1
-        if ($LASTEXITCODE -ne 0 -and $installResult -match 'install technology is different') {
-            Write-Host "[WARN] PowerShell has different install technology. Uninstalling old version first..."
-            winget uninstall -e --id $pkg --silent --force 2>$null
-            Start-Sleep -Seconds 2
-            Write-Host "[ACTION] Installing PowerShell $pkg..."
-            winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
-        }
-    } else {
-        winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
-    }
-
-    # Run post-install handler if defined
-    if ($postInstallHandlers.ContainsKey($pkg)) {
-        & $postInstallHandlers[$pkg]
-    }
+    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
 }
 
-if (Ensure-GetFileHash) {
+$claudeCommand = Get-Command -Name 'claude' -ErrorAction SilentlyContinue
+
+if ($claudeCommand) {
+    Write-Host ("[INFO] Claude Code already installed at '{0}'; skipping native installer." -f $claudeCommand.Source)
+} else {
     Write-Host "Installing/upgrading Claude Code via native installer..."
     try {
-      irm https://claude.ai/install.ps1 | iex
+        irm https://claude.ai/install.ps1 | iex
     } catch {
-      Write-Host "[WARN] Failed to run Claude Code installer: $($_.Exception.Message)"
+        Write-Host "[WARN] Failed to run Claude Code installer: $($_.Exception.Message)"
     }
-} else {
-    Write-Host "[WARN] Skipping Claude Code installer because 'Get-FileHash' is unavailable."
 }
