@@ -98,8 +98,6 @@ $packages += @(
 {{ end }}
 
 foreach ($pkg in ($packages | Sort-Object -Unique)) {
-    Write-Host "=== $pkg ==="
-
     $isInstalled = Test-PackageInstalled -PackageId $pkg
 
     if ($isInstalled) {
