@@ -1,0 +1,51 @@
+$ErrorActionPreference = "Stop"
+
+$nodeVersion = "{{ .node_version }}".Trim()
+
+$currentVersion = (nvm current).Trim()
+if ($currentVersion -like 'v*') {
+  $currentVersion = $currentVersion.Substring(1)
+}
+
+$installedVersions = @()
+try {
+  $installedVersions = nvm list |
+    ForEach-Object { $_.Trim() } |
+    Where-Object { $_ } |
+    ForEach-Object {
+      $line = $_
+      if ($line.StartsWith('*')) {
+        $line = $line.TrimStart('*').Trim()
+      }
+      ($line -split '\s+')[0]
+    } |
+    Where-Object { $_ }
+} catch {
+  Write-Host ("[ERROR] Unable to list installed Node.js versions: {0}" -f $_.Exception.Message) -ForegroundColor Red
+}
+
+if ($installedVersions -notcontains $nodeVersion) {
+  Write-Host ("[INFO] Installing Node.js {0} via nvm..." -f $nodeVersion)
+  nvm install $nodeVersion
+} else {
+  Write-Host ("[INFO] Node.js {0} already installed; skipping nvm install." -f $nodeVersion)
+}
+
+if ($currentVersion -ne $nodeVersion) {
+  Write-Host ("[INFO] Activating Node.js {0} via nvm..." -f $nodeVersion)
+  nvm use $nodeVersion | Out-Null
+} else {
+  Write-Host ("[INFO] Node.js {0} already active; skipping nvm use." -f $nodeVersion)
+}
+
+{{- if not .is_work_machine }}
+$npmGlobalTools = @(
+{{- range .non_work_npm_global_tools }}
+  "{{ . }}"
+{{- end }}
+)
+foreach ($tool in $npmGlobalTools) {
+  Write-Host ("[INFO] Installing global npm package '{0}'..." -f $tool)
+  npm install -g $tool
+}
+{{- end }}
