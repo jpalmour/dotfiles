@@ -1,0 +1,20 @@
+$ErrorActionPreference = "Stop"
+
+# Install and activate the pinned Node.js version
+$nodeVersion = "{{ .node_version }}"
+nvm install $nodeVersion
+nvm use $nodeVersion
+nvm alias default $nodeVersion
+
+Write-Output "[INFO] Installing/upgrading npm-based CLI tools..."
+{{- if not .is_work_machine }}
+$npmGlobalTools = @(
+{{- range .non_work_npm_global_tools }}
+  "{{ . }}"
+{{- end }}
+)
+foreach ($tool in $npmGlobalTools) {
+  Write-Host ("[INFO] Installing global npm package '{0}'..." -f $tool)
+  npm install -g $tool
+}
+{{- end }}
