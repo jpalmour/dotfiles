@@ -1,0 +1,237 @@
+$ErrorActionPreference = 'Stop'
+
+function Ensure-WindowsOpenSSH {
+  $sshPath = Join-Path $env:SystemRoot 'System32\OpenSSH\ssh.exe'
+  if (Test-Path $sshPath) {
+    Write-Host '[INFO] Windows OpenSSH Client already installed.'
+    return
+  }
+
+  Write-Host '[INFO] Installing Windows OpenSSH Client capability...'
+  try {
+    $capability = Get-WindowsCapability -Online -Name 'OpenSSH.Client~~~~0.0.1.0' -ErrorAction Stop
+    if ($capability.State -ne 'Installed') {
+      Add-WindowsCapability -Online -Name $capability.Name *>$null
+      Write-Host '[INFO] Windows OpenSSH Client installed.'
+    } else {
+      Write-Host '[INFO] Windows OpenSSH Client reported as installed after check.'
+    }
+  } catch {
+    Write-Host ('[ERROR] Unable to ensure Windows OpenSSH Client: {0}' -f $_.Exception.Message) -ForegroundColor Red
+  }
+}
+
+Ensure-WindowsOpenSSH
+
+# After installation, winget adds to PATH but it doesn't take effect in current session
+# Find 1Password executable dynamically and add to PATH persistently
+function Ensure-1PasswordInPath {
+  $onePasswordCmd = Get-Command 1Password -ErrorAction SilentlyContinue
+  $onePasswordCLICmd = Get-Command op -ErrorAction SilentlyContinue
+  if ($onePasswordCmd) {
+    Write-Host ("[INFO] 1Password executable detected in path at {0}" -f $onePasswordCmd.Source)
+    if ($onePasswordCLICmd) {
+      # no logic was added to ensure op is in path, though I'm not sure why one would be needed
+      # but not the other, given they live in different dirs
+      Write-Host ("[INFO] op (1Password cli) executable detected in path at {0}" -f $onePasswordCLICmd.Source)
+    }
+    return
+  }
+  $1passwordAppPath = Get-ChildItem -Path "$env:LOCALAPPDATA\1Password\app" -Directory -ErrorAction SilentlyContinue |
+    Sort-Object Name -Descending | Select-Object -First 1
+  
+  if ($1passwordAppPath -and (Test-Path (Join-Path $1passwordAppPath.FullName '1Password.exe'))) {
+    $appDir = $1passwordAppPath.FullName
+    
+    # Add to current session
+    $env:PATH = "$appDir;$env:PATH"
+    
+    # Add to user PATH persistently via registry
+    try {
+      $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+      
+      if ($userPath -notlike "*$appDir*") {
+        $newPath = "$appDir;$userPath"
+        [Environment]::SetEnvironmentVariable('PATH', $newPath, 'User')
+        Write-Host ("[INFO] Added 1Password (version $($1passwordAppPath.Name)) to User PATH persistently.")
+      }
+
+    } catch {
+      Write-Host ("[WARN] Could not persist to User PATH: {0}, Added to current session only." -f $_.Exception.Message) -ForegroundColor Yellow
+    }
+  } else {
+    $expectedPath = Join-Path $env:LOCALAPPDATA '1Password\app'
+    Write-Host ("[ERROR] 1Password installation not detected in '{0}'. Ensure 1Password is installed before proceeding." -f $expectedPath) -ForegroundColor Red
+  }
+}
+
+Ensure-1PasswordInPath
+
+function Ensure-OpSshKey {
+  param([string]$Title, [string]$Purpose)
+  Write-Host ("[INFO] Checking for SSH key '{0}' in 1Password..." -f $Title)
+  try {
+    op item get $Title --fields 'public key' *>$null
+    if ($LASTEXITCODE -eq 0) {
+      Write-Host ("[INFO] SSH key '{0}' found in 1Password." -f $Title)
+      try {
+        $creationDate = op item get $Title --fields 'Creation Date' 2>$null
+        if ($creationDate) { Write-Host ("    Created: {0}" -f $creationDate) }
+      } catch {}
+      return
+    }
+  } catch {}
+
+  Write-Host ("[WARN] SSH key '{0}' not found in 1Password." -f $Title) -ForegroundColor Yellow
+  Write-Host ""
+  $createKey = Read-Host (" Would you like to create '{0}' now? (y/N)" -f $Title)
+  if ($createKey -match "^[Yy]$") {
+    Write-Host (" Creating new Ed25519 key: {0}..." -f $Title)
+    $creationDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
+    try {
+      op item create --category 'SSH Key' --title $Title --ssh-generate-key ed25519 ("Creation Date[text]={0}" -f $creationDate) ("Purpose[text]={0}" -f $Purpose) *>$null
+      Write-Host " [OK] SSH key created successfully!"
+      Write-Host ""
+      Write-Host (" [KEY] Public key for GitHub ({0}):" -f $Title)
+      Write-Host "========================================================================="
+      op item get $Title --fields 'public key'
+      Write-Host "========================================================================="
+      Write-Host ""
+      Write-Host ' Next steps - Add this key to GitHub TWICE:'
+      Write-Host '  1. Go to https://github.com/settings/keys'
+      Write-Host '  2. Click "New SSH key" -> Add as "Authentication Key"'
+      Write-Host '  3. Click "New SSH key" again -> Add as "Signing Key"'
+      Write-Host ""
+      Write-Host -NoNewline ' Press any key after adding the key to GitHub (both auth & signing)...'
+      $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+      Write-Host ""
+    } catch {
+      Write-Host (" Failed to create SSH key '{0}'." -f $Title)
+      Write-Host (" Machine setup requires '{0}'. Exiting now..." -f $Title)
+      exit 1
+    }
+  } else {
+    Write-Host ("[RED] Skipping '{0}' creation. Machine setup requires this key. Exiting now..." -f $Title)  -ForegroundColor Red
+    exit 1
+  }
+}
+
+function Get-ActualUser {
+  # When running as admin, $env:USERNAME is the admin account, not the actual user.
+  # Get the actual user from USERPROFILE path
+  $userFromProfile = Split-Path $env:USERPROFILE -Leaf
+  return $userFromProfile
+}
+
+function Check-Key {
+  param([string]$Priv,[string]$Pub)
+
+  $privExists = Test-Path $Priv
+  $pubExists = Test-Path $Pub
+
+  if ($privExists -and $pubExists) {
+    Write-Host ("[INFO]  - found existing SSH key pair: {0} / {1}" -f $Priv, $Pub)
+    return $true
+  }
+
+  return $false
+}
+
+function Ensure-Key {
+  param([string]$Title,[string]$Priv,[string]$Pub)
+  $actualUser = Get-ActualUser
+
+  try {
+    $privKey = op item get $Title --fields 'private key' --reveal
+    if ($LASTEXITCODE -eq 0 -and $privKey) {
+      # Remove surrounding quotes if present (PowerShell op output may include them)
+      $privKey = $privKey.Trim('"').Trim()
+      Set-Content -Path $Priv -Value $privKey -Encoding ascii -NoNewline
+      try { icacls $Priv /inheritance:r *>$null; icacls $Priv /grant:r "${actualUser}:(R,W)" *>$null } catch {}
+      try {
+        $pubKey = op item get $Title --fields 'public key' --reveal
+        if ($LASTEXITCODE -eq 0 -and $pubKey) { 
+          $pubKey = $pubKey.Trim('"').Trim()
+          Set-Content -Path $Pub -Value $pubKey -Encoding ascii -NoNewline
+        }
+      } catch {}
+      Write-Host ("[INFO] wrote {0} (+ .pub if available)" -f $Priv)
+    } else {
+      Write-Host ("[ERROR] Could not read '{0}' private key from 1Password." -f $Title) -ForegroundColor Red
+    }
+  } catch {
+    Write-Host ("[ERROR] Could not read '{0}' private key from 1Password." -f $Title) -ForegroundColor Red
+  }
+}
+
+try {
+
+  $sshDir = Join-Path $env:USERPROFILE '.ssh'
+  New-Item -ItemType Directory -Path $sshDir -Force *>$null
+
+  $devPriv = Join-Path $sshDir 'id_ed25519_dev'
+  $devPub  = Join-Path $sshDir 'id_ed25519_dev.pub'
+  $workPriv = Join-Path $sshDir 'id_ed25519_work'
+  $workPub  = Join-Path $sshDir 'id_ed25519_work.pub'
+
+  $keysExist = Check-Key -Priv $devPriv -Pub $devPub
+  {{- if .is_work_machine }}
+  if ($keysExist) {
+    $keysExist = Check-Key -Priv $workPriv -Pub $workPub
+  }
+  {{- end }}
+  
+  if ($keysExist) {
+    exit 0
+  }
+
+  Write-Host '[INFO] Opening 1Password...'
+
+  try {
+    Start-Process '1Password.exe' -ErrorAction Stop
+    Write-Host '[INFO] 1Password is starting...'
+  } catch {
+    Write-Host ('[WARN] Could not automatically open 1Password: {0} ' -f $_.Exception.Message) -ForegroundColor Yellow
+    Write-Host ('[WARN] Please open 1Password manually now.') -ForegroundColor Yellow
+  }
+
+  Write-Host ""
+  Write-Host ' In 1Password, please enable these settings:'
+  Write-Host '  1. Settings -> Developer -> [x] "Integrate with 1Password CLI"'
+  Write-Host '  2. Ensure 1Password is unlocked'
+  Write-Host ""
+  Write-Host -NoNewline ' Press any key when finished...'
+  $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+  Write-Host ""
+
+  try {
+    op account list *>$null
+  } catch {
+    Write-Host "[ERROR] 'op account list' didn't succeed. 1Password integration is required for machine setup." -ForegroundColor Red
+    exit 1
+  }
+
+  Ensure-OpSshKey -Title 'Dev SSH Key' -Purpose 'Development machine SSH authentication and Git signing'
+  {{- if .is_work_machine }}
+  Ensure-OpSshKey -Title 'Work SSH Key' -Purpose 'Work machine SSH authentication and Git signing'
+  {{- end }}
+
+  Ensure-Key -Title "Dev SSH Key" -Priv $devPriv -Pub $devPub
+  {{- if .is_work_machine }}
+  Ensure-Key -Title "Work SSH Key" -Priv $workPriv -Pub $workPub
+  {{- end }}
+
+  Write-Host '[INFO] Checking for SSH hosts configuration...'
+  try {
+    op item get 'ssh-hosts' --fields 'hosts' *>$null
+    Write-Host ('[INFO] SSH hosts configuration found in 1Password.')
+  } catch {
+    Write-Host ("[ERROR] SSH hosts configuration '{0}' not found." -f 'ssh-hosts') -ForegroundColor Red
+  }
+
+} catch {
+  Write-Host ""
+  Write-Host ('[ERROR] Unexpected error during 1Password setup: {0}' -f $_.Exception.Message) -ForegroundColor Red
+  Write-Host ('[ERROR] Machine setup cannot continue without 1Password integration.') -ForegroundColor Red
+  exit 1
+}

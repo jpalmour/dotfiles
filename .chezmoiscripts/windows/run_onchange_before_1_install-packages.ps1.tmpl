@@ -7,11 +7,11 @@ function Ensure-PowerShellModule {
 
     if (-not $installed) {
         if (-not (Get-Command -Name Install-Module -ErrorAction SilentlyContinue)) {
-            Write-Host ("[WARN] Install-Module not available; install module '{0}' manually." -f $Name) -ForegroundColor Yellow
+            Write-Host ("[ERROR] Install-Module not available; install module '{0}' manually." -f $Name) -ForegroundColor Red
             return
         }
 
-        Write-Host ("[ACTION] Installing PowerShell module '{0}'..." -f $Name)
+        Write-Host ("[INFO] Installing PowerShell module '{0}'..." -f $Name)
         try {
             Install-Module -Name $Name -Scope CurrentUser -Force -AllowClobber -ErrorAction Stop | Out-Null
         } catch {
@@ -25,7 +25,7 @@ function Ensure-PowerShellModule {
     try {
         Import-Module -Name $Name -ErrorAction Stop
     } catch {
-        Write-Host ("[WARN] Failed to import module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Yellow
+        Write-Host ("[ERROR] Failed to import module '{0}': {1}" -f $Name, $_.Exception.Message) -ForegroundColor Red
     }
 }
 
@@ -58,14 +58,16 @@ function Test-CaskaydiaFont {
 }
 
 function Install-PowerShellModules {
-    Ensure-PowerShellModule -Name 'PackageManagement'
-    Ensure-PowerShellModule -Name 'PowerShellGet'
-    Ensure-PowerShellModule -Name 'PSReadLine'
-    Ensure-PowerShellModule -Name 'posh-git'
-    Ensure-PowerShellModule -Name 'Terminal-Icons'
+    param(
+        [string[]]$Modules = @()
+    )
+
+    foreach ($module in ($Modules | Sort-Object -Unique)) {
+        Ensure-PowerShellModule -Name $module
+    }
 
     if (-not (Test-CaskaydiaFont)) {
-        Write-Host "[WARN] CaskaydiaCove Nerd Font not detected. Download 'Caskaydia Cove' from https://www.nerdfonts.com/font-downloads, then right-click 'CaskaydiaCoveNerdFontMono-Regular.ttf' > Show more options > Install for all users, and set Windows Terminal to use 'CaskaydiaCove NF'."
+        Write-Host ("[WARN] CaskaydiaCove Nerd Font not detected. Download 'Caskaydia Cove' from https://www.nerdfonts.com/font-downloads, then right-click 'CaskaydiaCoveNerdFontMono-Regular.ttf' > Show more options > Install for all users, and set Windows Terminal to use 'CaskaydiaCove NF'.") -ForegroundColor Yellow
     }
 }
 
@@ -78,10 +80,17 @@ function Test-PackageInstalled {
     return ($LASTEXITCODE -eq 0 -and $output -match [regex]::Escape($PackageId))
 }
 
+{{- $windowsPowerShellModules := (default (list) .windows_powershell_modules) | sortAlpha | uniq }}
 {{- $windowsPackages := (default (list) .windows_winget_packages) | sortAlpha | uniq }}
 {{- $windowsNonWorkPackages := (default (list) .windows_non_work_winget_packages) | sortAlpha | uniq }}
 
-Install-PowerShellModules
+$powerShellModules = @(
+{{- range $windowsPowerShellModules }}
+    "{{ . }}"
+{{ end }}
+)
+
+Install-PowerShellModules -Modules $powerShellModules
 
 $packages = @(
 {{- range $windowsPackages }}
@@ -105,7 +114,7 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
         continue
     }
 
-    Write-Host "[ACTION] Installing $pkg..."
+    Write-Host "[INFO] Installing $pkg..."
 
     winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
 }
@@ -119,6 +128,6 @@ if ($claudeCommand) {
     try {
         irm https://claude.ai/install.ps1 | iex
     } catch {
-        Write-Host "[WARN] Failed to run Claude Code installer: $($_.Exception.Message)"
+        Write-Host ("[ERROR] Failed to run Claude Code installer: $($_.Exception.Message)") -ForegroundColor Red
     }
 }
