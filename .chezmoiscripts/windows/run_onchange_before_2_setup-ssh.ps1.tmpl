@@ -130,7 +130,7 @@ function Check-Key {
   $pubExists = Test-Path $Pub
 
   if ($privExists -and $pubExists) {
-    Write-Host ("[INFO]  - found existing SSH key pair: {0} / {1}" -f $Priv, $Pub)
+    Write-Host ("[INFO] found existing SSH key pair: {0} / {1}" -f $Priv, $Pub)
     return $true
   }
 
