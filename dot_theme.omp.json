@@ -2,7 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
   "transient_prompt": {
     "background": "transparent",
-    "foreground": "#D4E157",
+    "foreground_templates": [
+      "{{ if gt .Code 0 }}#FF5252{{ end }}",
+      "#D4E157"
+    ],
     "template": "❯ "
   },
   "blocks": [
@@ -13,25 +16,43 @@
           "background": "#546E7A",
           "foreground": "#26C6DA",
           "properties": {
-            "style": "full"
+            "style": "agnoster_short",
+            "max_depth": 2
           },
           "style": "plain",
-          "template": " {{ .Path }} ",
+          "template": " {{ if gt (len .Path) 20 }}...{{ substr (sub (len .Path) 20) (len .Path) .Path }}{{ else }}{{ .Path }}{{ end }} ",
           "type": "path"
         },
         {
           "background": "#546E7A",
           "foreground": "#D4E157",
           "style": "plain",
-          "template": "<#26C6DA>\ue0b1 </>{{ .HEAD }} ",
+          "template": "<#26C6DA>\ue0b1 </>{{ if gt (len .HEAD) 15 }}{{ trunc 15 .HEAD }}...{{ else }}{{ .HEAD }}{{ end }} ",
           "type": "git"
         },
         {
-          "background": "transparent",
+          "background_templates": [
+            "{{ if gt .Code 0 }}#FF5252{{ else }}#D4E157{{ end }}"
+          ],
           "foreground": "#546E7A",
+          "properties": {
+            "always_enabled": true
+          },
           "style": "plain",
           "template": "\ue0b0",
-          "type": "text"
+          "type": "status"
+        },
+        {
+          "background": "transparent",
+          "foreground_templates": [
+            "{{ if gt .Code 0 }}#FF5252{{ else }}#D4E157{{ end }}"
+          ],
+          "properties": {
+            "always_enabled": true
+          },
+          "style": "plain",
+          "template": "\ue0b0 ",
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -48,26 +69,7 @@
           "type": "session"
         }
       ],
-      "type": "prompt"
-    },
-    {
-      "alignment": "left",
-      "newline": true,
-      "segments": [
-        {
-          "foreground": "#D4E157",
-          "foreground_templates": [
-            "{{ if gt .Code 0 }}#FF5252{{ end }}"
-          ],
-          "properties": {
-            "always_enabled": true
-          },
-          "style": "plain",
-          "template": "\u276f ",
-          "type": "status"
-        }
-      ],
-      "type": "prompt"
+      "type": "rprompt"
     }
   ],
   "version": 3

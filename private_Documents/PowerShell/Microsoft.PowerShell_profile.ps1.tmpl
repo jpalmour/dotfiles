@@ -27,6 +27,9 @@ if (Get-Module -ListAvailable -Name 'PSReadLine') {
     Set-PSReadLineOption -EditMode Windows
     Set-PSReadLineOption -PredictionSource History
     Set-PSReadLineOption -PredictionViewStyle ListView
+    Set-PSReadLineOption -Colors @{
+        Parameter = '#26C6DA'  # Cyan matching theme for better contrast
+    }
 }
 
 # Initialize Oh My Posh if available.
