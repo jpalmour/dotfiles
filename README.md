@@ -28,3 +28,17 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 - Supports Linux, macOS, and Windows
 - Uses `.chezmoiignore` for OS-specific file management
 - Template files (`.tmpl`) for machine-specific configurations
+
+## Updating SSH Configurations
+
+SSH configs skip 1Password prompts by default. To force update:
+
+```pwsh
+# PowerShell
+$env:CHEZMOI_SKIP_SSH="false"; chezmoi apply; Remove-Item Env:\CHEZMOI_SKIP_SSH
+```
+
+```bash
+# Bash
+CHEZMOI_SKIP_SSH=false chezmoi apply
+```

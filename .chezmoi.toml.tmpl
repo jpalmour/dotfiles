@@ -21,6 +21,7 @@
   is_work_machine = {{ promptBool "Is this a WORK machine? (y/N)" false }}
   is_wsl = {{ $wsl }}
   node_version = "{{ $nodeVersion }}"
+  skip_ssh = {{ env "CHEZMOI_SKIP_SSH" | default "true" }}
   macos_brew_formulae = [
     "coreutils",
     "curl",

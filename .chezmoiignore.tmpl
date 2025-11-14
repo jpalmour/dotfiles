@@ -1,3 +1,8 @@
+{{- if .skip_ssh }}
+.ssh/authorized_keys
+.ssh/config
+{{- end }}
+
 # Ignore all oh-my-zsh plugins by default...
 .oh-my-zsh/plugins/**
 
