@@ -65,8 +65,15 @@
           "foreground": "#D4E157",
           "leading_diamond": "\ue0b2",
           "style": "diamond",
-          "template": " {{ .UserName }}@{{ .HostName }} ",
+          "template": " {{ .HostName }} ",
           "type": "session"
+        },
+        {
+          "background": "#546E7A",
+          "foreground": "#26C6DA",
+          "style": "plain",
+          "template": "\ue0b3 {{ dateInZone \"15:04:05Z\" .CurrentDate \"UTC\" }} ",
+          "type": "time"
         }
       ],
       "type": "rprompt"
