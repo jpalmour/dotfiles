@@ -5,6 +5,9 @@
 /.claude/settings.local.json
 CLAUDE.local.md
 
+# Ignore local Cursor rules
+*.local.mdc
+
 # Ignore vim files:
 *~
 *.swp
