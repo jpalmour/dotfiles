@@ -13,7 +13,7 @@ set -eufo pipefail
 {{- else -}}
 {{-   $snaps = $snapPackagesNonWsl -}}
 {{-   $classicSnaps = $classicSnapPackagesNonWsl -}}
-{{- end -}}
+{{- end }}
 
 sudo apt-get update
 sudo apt-get install -y {{ $packages | join " " }}
