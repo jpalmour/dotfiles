@@ -17,18 +17,29 @@
           "foreground": "#26C6DA",
           "properties": {
             "style": "agnoster_short",
-            "max_depth": 2
+            "max_depth": 2,
+            "mapped_locations": {
+              "D:\\source\\repos\\github.com": ""
+	          }
           },
           "style": "plain",
-          "template": " {{ if gt (len .Path) 20 }}...{{ substr (sub (len .Path) 20) (len .Path) .Path }}{{ else }}{{ .Path }}{{ end }} ",
           "type": "path"
         },
         {
+          "type": "git",
           "background": "#546E7A",
           "foreground": "#D4E157",
           "style": "plain",
-          "template": "<#26C6DA>\ue0b1 </>{{ if gt (len .HEAD) 15 }}{{ trunc 15 .HEAD }}...{{ else }}{{ .HEAD }}{{ end }} ",
-          "type": "git"
+          "template": "<#26C6DA>\ue0b1 </>{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} ",
+          "properties":{
+            "mapped_branches": {
+              "feat/*": "\uF135/",
+              "feature/*": "\uF135/",
+              "bug/*": "\uF188/",
+              "bugfix/*": "\uF188/",
+              "experimental/*": "\uF0C3/"
+            }
+          }
         },
         {
           "background_templates": [
