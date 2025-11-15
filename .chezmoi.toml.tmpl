@@ -11,9 +11,11 @@
   [interpreters.ps1]
     command = "pwsh"
     args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-File"]
+{{ if eq .chezmoi.os "windows" }}
 [cd]
     command = "pwsh"
     args = ["-NoLogo"]
+{{ end }}
 
 [data]
   personal_email = "{{ promptString `Personal email (for global git, SSH key comment)` `jpalmour@gmail.com` }}"
