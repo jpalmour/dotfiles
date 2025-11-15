@@ -9,9 +9,9 @@ Host github.com
   HostName github.com
   User git
   IdentitiesOnly yes
-  IdentityFile ~/.ssh/{{- if and .is_work_machine (not .is_wsl) -}}id_ed25519_work{{- else -}}id_ed25519_dev{{- end }}
+  IdentityFile ~/.ssh/{{- if .is_work_machine -}}id_ed25519_work{{- else -}}id_ed25519_dev{{- end }}
 
-{{- if and .is_work_machine (not .is_wsl) }}
+{{- if .is_work_machine }}
 
 Host github-personal.com
   HostName github.com
