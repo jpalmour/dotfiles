@@ -285,8 +285,8 @@
 
   # Custom prefix.
   # Icon for directories under ~/repos/github.com.
-  typeset -g POWERLEVEL9K_DIR_GITHUB_VISUAL_IDENTIFIER_EXPANSION=''
-  typeset -g POWERLEVEL9K_DIR_GITHUB_CONTENT_EXPANSION='${${P9K_CONTENT#*/github.com}#github.com}'
+  typeset -g POWERLEVEL9K_DIR_GITHUB_VISUAL_IDENTIFIER_EXPANSION='/'
+  typeset -g POWERLEVEL9K_DIR_GITHUB_CONTENT_EXPANSION='${${${${P9K_CONTENT#*/github.com}#github.com}##[/\\]}}'
   typeset -g POWERLEVEL9K_DIR_GITHUB_FOREGROUND=44
   typeset -g POWERLEVEL9K_DIR_GITHUB_SHORTENED_FOREGROUND=44
   typeset -g POWERLEVEL9K_DIR_GITHUB_ANCHOR_FOREGROUND=44
