@@ -480,36 +480,42 @@
   # style them independently from the regular OK and ERROR state.
   typeset -g POWERLEVEL9K_STATUS_EXTENDED_STATES=true
 
-  # Status on success. No content, just an icon. No need to show it if prompt_char is enabled as
-  # it will signify success by turning green (yellow-green #D4E157).
-  typeset -g POWERLEVEL9K_STATUS_OK=false
-  typeset -g POWERLEVEL9K_STATUS_OK_FOREGROUND=185
+  # Status on success. Show a blank powerline wedge with yellow-green background.
+  typeset -g POWERLEVEL9K_STATUS_OK=true
+  typeset -g POWERLEVEL9K_STATUS_OK_FOREGROUND=0
+  typeset -g POWERLEVEL9K_STATUS_OK_BACKGROUND=185
   typeset -g POWERLEVEL9K_STATUS_OK_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_STATUS_OK_CONTENT_EXPANSION=''
 
-  # Status when some part of a pipe command fails but the overall exit status is zero. It may look
-  # like this: 1|0.
+  # Status when some part of a pipe command fails but the overall exit status is zero.
   typeset -g POWERLEVEL9K_STATUS_OK_PIPE=true
-  typeset -g POWERLEVEL9K_STATUS_OK_PIPE_FOREGROUND=70
-  typeset -g POWERLEVEL9K_STATUS_OK_PIPE_VISUAL_IDENTIFIER_EXPANSION='✔'
+  typeset -g POWERLEVEL9K_STATUS_OK_PIPE_FOREGROUND=0
+  typeset -g POWERLEVEL9K_STATUS_OK_PIPE_BACKGROUND=185
+  typeset -g POWERLEVEL9K_STATUS_OK_PIPE_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_STATUS_OK_PIPE_CONTENT_EXPANSION=''
 
-  # Status when it's just an error code (e.g., '1'). No need to show it if prompt_char is enabled as
-  # it will signify error by turning red (#FF5252).
-  typeset -g POWERLEVEL9K_STATUS_ERROR=false
-  typeset -g POWERLEVEL9K_STATUS_ERROR_FOREGROUND=196
+  # Status when it's just an error code (e.g., '1'). Render as a red wedge.
+  typeset -g POWERLEVEL9K_STATUS_ERROR=true
+  typeset -g POWERLEVEL9K_STATUS_ERROR_FOREGROUND=0
+  typeset -g POWERLEVEL9K_STATUS_ERROR_BACKGROUND=196
   typeset -g POWERLEVEL9K_STATUS_ERROR_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_STATUS_ERROR_CONTENT_EXPANSION=''
 
   # Status when the last command was terminated by a signal.
   typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL=true
-  typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_FOREGROUND=160
+  typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_FOREGROUND=0
+  typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_BACKGROUND=196
   # Use terse signal names: "INT" instead of "SIGINT(2)".
   typeset -g POWERLEVEL9K_STATUS_VERBOSE_SIGNAME=false
-  typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_VISUAL_IDENTIFIER_EXPANSION='✘'
+  typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_STATUS_ERROR_SIGNAL_CONTENT_EXPANSION=''
 
   # Status when some part of a pipe command fails and the overall exit status is also non-zero.
-  # It may look like this: 1|0.
   typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE=true
-  typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_FOREGROUND=160
-  typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_VISUAL_IDENTIFIER_EXPANSION='✘'
+  typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_FOREGROUND=0
+  typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_BACKGROUND=196
+  typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_STATUS_ERROR_PIPE_CONTENT_EXPANSION=''
 
   ###################[ command_execution_time: duration of the last command ]###################
   # Show duration of the last command if takes at least this many seconds.
@@ -1619,6 +1625,7 @@
   # Current time color (cyan #26C6DA).
   typeset -g POWERLEVEL9K_TIME_FOREGROUND=44
   # Format for the current time in UTC: 15:04:05Z (matching OMP theme).
+  typeset -g POWERLEVEL9K_TIME_ZONE=UTC
   typeset -g POWERLEVEL9K_TIME_FORMAT='%D{%H:%M:%SZ}'
   # If set to true, time will update when you hit enter. This way prompts for the past
   # commands will contain the start times of their commands as opposed to the default
@@ -1627,7 +1634,7 @@
   # Custom icon.
   typeset -g POWERLEVEL9K_TIME_VISUAL_IDENTIFIER_EXPANSION=
   # Custom prefix (subsegment separator in cyan).
-  typeset -g POWERLEVEL9K_TIME_PREFIX='%44F\uE0B3 '
+  typeset -g POWERLEVEL9K_TIME_PREFIX=''
 
   # Example of a user-defined prompt segment. Function prompt_example will be called on every
   # prompt if `example` prompt segment is added to POWERLEVEL9K_LEFT_PROMPT_ELEMENTS or
