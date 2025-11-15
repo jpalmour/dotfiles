@@ -111,7 +111,7 @@
   # The right end of left prompt.
   typeset -g POWERLEVEL9K_LEFT_PROMPT_LAST_SEGMENT_END_SYMBOL='\uE0B0'
   # The left end of right prompt.
-  typeset -g POWERLEVEL9K_RIGHT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
+  typeset -g POWERLEVEL9K_RIGHT_PROMPT_FIRST_SEGMENT_START_SYMBOL='\uE0B2'
   # The left end of left prompt.
   typeset -g POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
   # The right end of right prompt.
@@ -279,12 +279,14 @@
   #
   typeset -g POWERLEVEL9K_DIR_CLASSES=(
     '~/repos/github.com(|/*)' GITHUB ''
-    '*'                     DEFAULT ''
+    '*/github.com(|/*)'      GITHUB ''
+    '*'                      DEFAULT ''
   )
 
   # Custom prefix.
   # Icon for directories under ~/repos/github.com.
   typeset -g POWERLEVEL9K_DIR_GITHUB_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_DIR_GITHUB_CONTENT_EXPANSION='${${P9K_CONTENT#*/github.com}#github.com}'
   typeset -g POWERLEVEL9K_DIR_GITHUB_FOREGROUND=44
   typeset -g POWERLEVEL9K_DIR_GITHUB_SHORTENED_FOREGROUND=44
   typeset -g POWERLEVEL9K_DIR_GITHUB_ANCHOR_FOREGROUND=44
@@ -1624,9 +1626,8 @@
   ####################################[ time: current time ]####################################
   # Current time color (cyan #26C6DA).
   typeset -g POWERLEVEL9K_TIME_FOREGROUND=44
-  # Format for the current time in UTC: 15:04:05Z (matching OMP theme).
-  typeset -g POWERLEVEL9K_TIME_ZONE=UTC
-  typeset -g POWERLEVEL9K_TIME_FORMAT='%D{%H:%M:%SZ}'
+  # Render current time in UTC: 15:04:05Z (matching OMP theme).
+  typeset -g POWERLEVEL9K_TIME_CONTENT_EXPANSION='${"$(TZ=UTC date +%H:%M:%SZ)"}'
   # If set to true, time will update when you hit enter. This way prompts for the past
   # commands will contain the start times of their commands as opposed to the default
   # behavior where they contain the end times of their preceding commands.
