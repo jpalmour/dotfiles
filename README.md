@@ -9,7 +9,7 @@ Install chezmoi and apply dotfiles in one command:
 ### Linux/MacOS (bash)
 
 ```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour --exclude=false '.ssh/**'
 ```
 
 ### Windows (pwsh)
@@ -20,25 +20,19 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
    ```
 2. In a new `pwsh` session, apply this repo:
    ```pwsh
-   chezmoi init --apply jpalmour
+   chezmoi init --apply jpalmour --exclude=false '.ssh/**'
    ```
-
-## Repository Structure
-
-- Supports Linux, macOS, and Windows
-- Uses `.chezmoiignore` for OS-specific file management
-- Template files (`.tmpl`) for machine-specific configurations
 
 ## Updating SSH Configurations
 
-SSH configs skip 1Password prompts by default. To force update:
+`.ssh/` generation is skipped by default as it depends on 1password and is slow. To update SSH configurations:
+
+```bash
+# Linux/macOS
+chezmoi apply --exclude=false '.ssh/**'
+```
 
 ```pwsh
 # PowerShell
-$env:CHEZMOI_SKIP_SSH="false"; chezmoi apply; Remove-Item Env:\CHEZMOI_SKIP_SSH
-```
-
-```bash
-# Bash
-CHEZMOI_SKIP_SSH=false chezmoi apply
+chezmoi apply --exclude=false '.ssh/**'
 ```

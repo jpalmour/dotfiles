@@ -1,4 +1,4 @@
-{{- if .skip_ssh }}
+{{- if not (env "CHEZMOI_INCLUDE_SSH") }}
 .ssh/authorized_keys
 .ssh/config
 {{- end }}
