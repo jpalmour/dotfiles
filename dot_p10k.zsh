@@ -31,9 +31,9 @@
 
   # The list of segments shown on the left. Fill it with the most important segments.
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
+    status                  # exit code indicator (colored wedge at start)
     dir                     # current directory
     vcs                     # git status
-    status                  # exit code (for powerline separator)
   )
 
   # The list of segments shown on the right. Fill it with less important segments.
@@ -151,8 +151,8 @@
   ##################################[ dir: current directory ]##################################
   # Default current directory color (cyan #26C6DA).
   typeset -g POWERLEVEL9K_DIR_FOREGROUND=44
-  # Show at most the last two path segments (matching OMP theme).
-  typeset -g POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_last
+  # Show first component + last two path segments (matching OMP theme agnoster_short with max_depth 2).
+  typeset -g POWERLEVEL9K_SHORTEN_STRATEGY=truncate_to_first_and_last
   # Replace removed segment suffixes with this symbol.
   typeset -g POWERLEVEL9K_SHORTEN_DELIMITER='...'
   # Color of the shortened directory segments.
