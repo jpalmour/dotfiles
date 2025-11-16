@@ -9,8 +9,8 @@ elif [ -x /usr/local/bin/brew ]; then
   eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-{{- $brews := (default (list) .macos_brew_formulae) | sortAlpha | uniq -}}
-{{- $casks := (default (list) .macos_brew_casks) | sortAlpha | uniq -}}
+{{ $brews := (default (list) .macos_brew_formulae) | sortAlpha | uniq -}}
+{{ $casks := (default (list) .macos_brew_casks) | sortAlpha | uniq -}}
 
 brew bundle --file=/dev/stdin <<'EOBREW'
 {{ range $brews -}}
@@ -18,7 +18,7 @@ brew "{{ . }}"
 {{ end -}}
 {{ range $casks -}}
 cask "{{ . }}"
-{{ end -}}
+{{ end }}
 EOBREW
 
 echo "Installing/upgrading Claude Code via native installer..."
