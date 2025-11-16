@@ -2,14 +2,14 @@
 
 Personal dotfiles managed with [chezmoi](https://www.chezmoi.io/).
 
-## Quick Setup (New Machine)
+## Quick Setup
 
 Install chezmoi and apply dotfiles in one command:
 
 ### Linux/MacOS (bash)
 
 ```bash
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour --exclude=false '.ssh/**'
+CHEZMOI_INCLUDE_SSH=1 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ```
 
 ### Windows (pwsh)
@@ -20,19 +20,15 @@ sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour --exclude=false '.
    ```
 2. In a new `pwsh` session, apply this repo:
    ```pwsh
-   chezmoi init --apply jpalmour --exclude=false '.ssh/**'
+   $env:CHEZMOI_INCLUDE_SSH=1; chezmoi init --apply jpalmour
    ```
 
-## Updating SSH Configurations
-
-`.ssh/` generation is skipped by default as it depends on 1password and is slow. To update SSH configurations:
+## Applying Changes
 
 ```bash
-# Linux/macOS
-chezmoi apply --exclude=false '.ssh/**'
-```
+# Quick apply (skips .ssh/ generation)
+ca
 
-```pwsh
-# PowerShell
-chezmoi apply --exclude=false '.ssh/**'
+# Full apply (includes .ssh/ generation from 1Password)
+ca-all
 ```
