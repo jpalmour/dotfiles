@@ -1,24 +1,86 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-# Load nvm and use the pinned version
-if [ -s "$HOME/.nvm/nvm.sh" ]; then
-  . "$HOME/.nvm/nvm.sh"
-  nvm use {{ .node_version }}
+NODE_VERSION="{{ .node_version }}"
+NVM_DIR="${HOME}/.nvm"
+NVM_VERSION="v0.40.3"
+
+echo "[INFO] Setting up Node.js ${NODE_VERSION} via nvm..."
+
+# Install nvm if not already installed
+if [ ! -d "${NVM_DIR}" ]; then
+  echo "[INFO] nvm not found. Installing nvm ${NVM_VERSION}..."
+
+  # Download and run the nvm install script
+  if command -v curl &> /dev/null; then
+    curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+  elif command -v wget &> /dev/null; then
+    wget -qO- "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+  else
+    echo "[ERROR] Neither curl nor wget is available. Cannot install nvm." >&2
+    exit 1
+  fi
+
+  echo "[INFO] nvm installed successfully."
+else
+  echo "[INFO] nvm already installed; skipping installation."
 fi
 
-# Install/upgrade npm CLI tools intended for non-work machines
+# Load nvm into current shell session
+export NVM_DIR="${NVM_DIR}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Verify nvm is available
+if ! command -v nvm &> /dev/null; then
+  echo "[ERROR] nvm command not found after installation. Please restart your terminal." >&2
+  exit 1
+fi
+
+# Check if the desired Node.js version is already installed
+INSTALLED_VERSIONS=$(nvm list --no-colors --no-alias 2>/dev/null | grep -o 'v[0-9.]*' | sed 's/v//' || echo "")
+
+if echo "${INSTALLED_VERSIONS}" | grep -q "^${NODE_VERSION}$"; then
+  echo "[INFO] Node.js ${NODE_VERSION} already installed; skipping nvm install."
+else
+  echo "[INFO] Installing Node.js ${NODE_VERSION} via nvm..."
+  nvm install "${NODE_VERSION}"
+fi
+
+# Check current version and activate if needed
+CURRENT_VERSION=$(nvm current 2>/dev/null | sed 's/v//' || echo "none")
+
+if [ "${CURRENT_VERSION}" != "${NODE_VERSION}" ]; then
+  echo "[INFO] Activating Node.js ${NODE_VERSION} via nvm..."
+  nvm use "${NODE_VERSION}"
+  nvm alias default "${NODE_VERSION}"
+else
+  echo "[INFO] Node.js ${NODE_VERSION} already active; skipping nvm use."
+fi
+
+# Verify Node.js and npm are available
+if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
+  echo "[ERROR] Node.js or npm not available after nvm setup." >&2
+  exit 1
+fi
+
+echo "[INFO] Node.js version: $(node --version)"
+echo "[INFO] npm version: $(npm --version)"
+
+# Install npm global packages for non-work machines
 {{- if not .is_work_machine }}
-tools=(
+echo "[INFO] Installing npm global packages..."
+TOOLS=(
 {{- range .non_work_npm_global_tools }}
   "{{ . }}"
 {{- end }}
 )
-for tool in "${tools[@]}"; do
-  npm install -g "$tool"
+
+for tool in "${TOOLS[@]}"; do
+  echo "[INFO] Installing global npm package '${tool}'..."
+  npm install -g "${tool}"
 done
 {{- else }}
-echo "Skipping npm global tool installation on work machine."
+echo "[INFO] Skipping npm global package installation on work machine."
 {{- end }}
 
-
+echo "[INFO] Node.js setup complete."
