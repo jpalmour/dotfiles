@@ -283,10 +283,35 @@
     '*'                      DEFAULT ''
   )
 
-  # Custom prefix.
-  # Icon for directories under ~/repos/github.com.
-  typeset -g POWERLEVEL9K_DIR_GITHUB_VISUAL_IDENTIFIER_EXPANSION='/'
-  typeset -g POWERLEVEL9K_DIR_GITHUB_CONTENT_EXPANSION='${${${${P9K_CONTENT#*/github.com}#github.com}##[/\\]}}'
+  # Custom rendering for directories under github.com: use the full path to avoid collisions with
+  # home-dir shortening and keep the GitHub icon tight to the path.
+  function _p10k_github_path() {
+    local path=${PWD}
+    path=${path#*/github.com}
+    path=${path#github.com}
+    path=${path##[/\\]#}
+
+    local -a parts=(${(s:/:)path})
+    (( ${#parts} )) || return
+
+    local -i tail=${POWERLEVEL9K_SHORTEN_DIR_LENGTH:-2}
+    (( tail < 0 )) && tail=0
+    local delimiter=${POWERLEVEL9K_SHORTEN_DELIMITER:-...}
+
+    if (( tail == 0 )); then
+      (( ${#parts} > 1 )) && print -r -- "${parts[1]}/${delimiter}/${parts[-1]}" || print -r -- "${parts[1]}"
+      return
+    fi
+
+    if (( ${#parts} > tail + 1 )); then
+      print -r -- "${parts[1]}/${delimiter}/${(j:/:)parts[-tail,-1]}"
+    else
+      print -r -- "${(j:/:)parts}"
+    fi
+  }
+
+  typeset -g POWERLEVEL9K_DIR_GITHUB_VISUAL_IDENTIFIER_EXPANSION=
+  typeset -g POWERLEVEL9K_DIR_GITHUB_CONTENT_EXPANSION='/$(_p10k_github_path)'
   typeset -g POWERLEVEL9K_DIR_GITHUB_FOREGROUND=44
   typeset -g POWERLEVEL9K_DIR_GITHUB_SHORTENED_FOREGROUND=44
   typeset -g POWERLEVEL9K_DIR_GITHUB_ANCHOR_FOREGROUND=44

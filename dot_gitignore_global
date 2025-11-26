@@ -12,3 +12,7 @@ CLAUDE.local.md
 *~
 *.swp
 *.swo
+
+# Ignore macOS Finder cruft
+.DS_Store
+._*

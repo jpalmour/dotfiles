@@ -38,6 +38,14 @@ export EDITOR='vim'
 
 export PATH="$PATH:~/bin"
 
+# Ensure GitHub repos directory exists and is on cdpath for quick access.
+mkdir -p -- "$HOME/repos/github.com/jpalmour"
+typeset -gU cdpath
+cdpath=("$HOME/repos/github.com/jpalmour" $cdpath)
+for _p in "$HOME/repos/github.com/jpalmour"/*; do
+  [[ -d $_p ]] && cdpath=("$_p" $cdpath)
+done
+
 {{- if eq .chezmoi.os "darwin" }}
 # Add VS Code to PATH (installed via Homebrew cask)
 if [[ -d "/Applications/Visual Studio Code.app/Contents/Resources/app/bin" ]]; then
