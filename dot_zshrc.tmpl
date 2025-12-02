@@ -42,7 +42,7 @@ export PATH="$PATH:~/bin"
 mkdir -p -- "$HOME/repos/github.com/jpalmour"
 typeset -gU cdpath
 cdpath=("$HOME/repos/github.com/jpalmour" $cdpath)
-for _p in "$HOME/repos/github.com/jpalmour"/*; do
+for _p in "$HOME/repos/github.com/jpalmour/"*(N); do
   [[ -d $_p ]] && cdpath=("$_p" $cdpath)
 done
 
