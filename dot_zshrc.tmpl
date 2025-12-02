@@ -58,6 +58,11 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"   # loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # optional completions
 
+# uv setup
+export PATH="$HOME/.local/bin:$PATH"
+# Add global venv to PATH for globally installed Python packages
+[ -d "$HOME/.venv-global/bin" ] && export PATH="$HOME/.venv-global/bin:$PATH"
+
 {{- if .is_work_machine }}
 source ~/.work-secrets.sh;
 {{- end }}

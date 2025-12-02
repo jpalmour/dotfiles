@@ -1,0 +1,90 @@
+$ErrorActionPreference = "Stop"
+
+$pythonVersion = "{{ .python_version }}".Trim()
+$uvPath = Join-Path $env:USERPROFILE ".local\bin\uv.exe"
+
+Write-Host ("[INFO] Setting up Python {0} via uv..." -f $pythonVersion)
+
+# Install uv if not already installed
+if (-not (Test-Path $uvPath)) {
+    Write-Host "[INFO] uv not found. Installing uv..."
+
+    try {
+        irm https://astral.sh/uv/install.ps1 | iex
+    } catch {
+        Write-Host ("[ERROR] Failed to install uv: {0}" -f $_.Exception.Message) -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "[INFO] uv installed successfully."
+} else {
+    Write-Host "[INFO] uv already installed; skipping installation."
+}
+
+# Verify uv is available
+if (-not (Test-Path $uvPath)) {
+    Write-Host "[ERROR] uv not found at $uvPath after installation." -ForegroundColor Red
+    exit 1
+}
+
+# Check if desired Python version is already installed
+$installedPythons = & $uvPath python list 2>$null |
+    Where-Object { $_ -match "^cpython-$pythonVersion\." } |
+    Select-Object -First 1
+
+if ($installedPythons) {
+    Write-Host ("[INFO] Python {0} already installed; skipping installation." -f $pythonVersion)
+} else {
+    Write-Host ("[INFO] Installing Python {0} via uv..." -f $pythonVersion)
+    & $uvPath python install $pythonVersion
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "[ERROR] Failed to install Python." -ForegroundColor Red
+        exit 1
+    }
+}
+
+# Verify Python is available
+$pythonCheck = & $uvPath python list | Where-Object { $_ -match "^cpython-$pythonVersion\." }
+if (-not $pythonCheck) {
+    Write-Host ("[ERROR] Python {0} not found after installation." -f $pythonVersion) -ForegroundColor Red
+    exit 1
+}
+
+# Pin Python version globally
+Write-Host ("[INFO] Pinning Python {0} as default..." -f $pythonVersion)
+& $uvPath python pin $pythonVersion
+
+# Verify Python works
+$pythonVersionOutput = & $uvPath run python --version 2>&1
+Write-Host ("[INFO] Python version: {0}" -f $pythonVersionOutput)
+
+# Create global virtual environment for packages
+$globalVenv = Join-Path $env:USERPROFILE ".venv-global"
+
+if (-not (Test-Path $globalVenv)) {
+    Write-Host "[INFO] Creating global virtual environment at $globalVenv..."
+    & $uvPath venv $globalVenv --python $pythonVersion
+} else {
+    Write-Host "[INFO] Global virtual environment already exists."
+}
+
+# Install packages into global venv
+Write-Host "[INFO] Installing global Python packages..."
+$packages = @(
+{{- range .python_global_tools }}
+    "{{ . }}"
+{{- end }}
+)
+
+foreach ($package in $packages) {
+    Write-Host ("[INFO] Installing package '{0}'..." -f $package)
+    & $uvPath pip install --python $globalVenv $package
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ("[WARN] Failed to install package '{0}'" -f $package) -ForegroundColor Yellow
+    }
+}
+
+Write-Host "[INFO] Python setup complete."
+Write-Host "[INFO] To use global packages, ensure ~/.venv-global/Scripts is in your PATH (see PowerShell profile)."

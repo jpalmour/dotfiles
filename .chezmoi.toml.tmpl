@@ -6,6 +6,8 @@
 {{ end }}
 {{- $defaultNodeVersion := "22.11.0" -}}
 {{- $nodeVersion := promptString `Node.js version (major.minor.patch)` $defaultNodeVersion -}}
+{{- $defaultPythonVersion := "3.14" -}}
+{{- $pythonVersion := promptString `Python version (major.minor)` $defaultPythonVersion -}}
 
 [interpreters]
   [interpreters.ps1]
@@ -23,6 +25,10 @@
   is_work_machine = {{ promptBool "Is this a WORK machine? (y/N)" false }}
   is_wsl = {{ $wsl }}
   node_version = "{{ $nodeVersion }}"
+  python_version = "{{ $pythonVersion }}"
+  python_global_tools = [
+    "pandas",
+  ]
   macos_brew_formulae = [
     "coreutils",
     "curl",

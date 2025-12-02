@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -eo pipefail
+
+PYTHON_VERSION="{{ .python_version }}"
+UV_BIN="${HOME}/.local/bin/uv"
+
+echo "[INFO] Setting up Python ${PYTHON_VERSION} via uv..."
+
+# Install uv if not already installed
+if [ ! -f "${UV_BIN}" ]; then
+  echo "[INFO] uv not found. Installing uv..."
+
+  if command -v curl &> /dev/null; then
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  elif command -v wget &> /dev/null; then
+    wget -qO- https://astral.sh/uv/install.sh | sh
+  else
+    echo "[ERROR] Neither curl nor wget is available. Cannot install uv." >&2
+    exit 1
+  fi
+
+  echo "[INFO] uv installed successfully."
+else
+  echo "[INFO] uv already installed; skipping installation."
+fi
+
+# Verify uv is available
+if [ ! -f "${UV_BIN}" ]; then
+  echo "[ERROR] uv not found at ${UV_BIN} after installation." >&2
+  exit 1
+fi
+
+# Check if desired Python version is already installed
+INSTALLED_PYTHONS=$(${UV_BIN} python list 2>/dev/null | grep -E "^cpython-${PYTHON_VERSION}\." | head -n 1 || echo "")
+
+if [ -n "${INSTALLED_PYTHONS}" ]; then
+  echo "[INFO] Python ${PYTHON_VERSION} already installed; skipping installation."
+else
+  echo "[INFO] Installing Python ${PYTHON_VERSION} via uv..."
+  ${UV_BIN} python install "${PYTHON_VERSION}"
+fi
+
+# Verify Python is available
+if ! ${UV_BIN} python list | grep -qE "^cpython-${PYTHON_VERSION}\."; then
+  echo "[ERROR] Python ${PYTHON_VERSION} not found after installation." >&2
+  exit 1
+fi
+
+# Pin Python version globally (creates .python-version in home dir)
+echo "[INFO] Pinning Python ${PYTHON_VERSION} as default..."
+${UV_BIN} python pin "${PYTHON_VERSION}"
+
+echo "[INFO] Python version: $(${UV_BIN} run python --version)"
+
+# Create global virtual environment for packages
+GLOBAL_VENV="${HOME}/.venv-global"
+
+if [ ! -d "${GLOBAL_VENV}" ]; then
+  echo "[INFO] Creating global virtual environment at ${GLOBAL_VENV}..."
+  ${UV_BIN} venv "${GLOBAL_VENV}" --python "${PYTHON_VERSION}"
+else
+  echo "[INFO] Global virtual environment already exists."
+fi
+
+# Install packages into global venv
+echo "[INFO] Installing global Python packages..."
+PACKAGES=(
+{{- range .python_global_tools }}
+  "{{ . }}"
+{{- end }}
+)
+
+for package in "${PACKAGES[@]}"; do
+  echo "[INFO] Installing package '${package}'..."
+  ${UV_BIN} pip install --python "${GLOBAL_VENV}" "${package}"
+done
+
+echo "[INFO] Python setup complete."
+echo "[INFO] To use global packages, ensure ~/.venv-global/bin is in your PATH (see .zshrc)."

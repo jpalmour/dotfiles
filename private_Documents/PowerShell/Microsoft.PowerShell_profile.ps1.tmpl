@@ -11,6 +11,15 @@ if (-not ($pathEntries | Where-Object { $_.TrimEnd('\') -ieq $localBin })) {
     $env:Path = "$localBin;$env:Path"
 }
 
+# Add global Python venv to PATH for globally installed packages
+$globalVenv = Join-Path $HOME ".venv-global\Scripts"
+if (Test-Path $globalVenv) {
+    $pathEntries = $env:Path -split ';'
+    if (-not ($pathEntries | Where-Object { $_.TrimEnd('\') -ieq $globalVenv })) {
+        $env:Path = "$globalVenv;$env:Path"
+    }
+}
+
 # Load essential modules if present. Missing modules are non-fatal; install script handles setup.
 foreach ($moduleName in @('PSReadLine', 'posh-git', 'Terminal-Icons')) {
     try {
