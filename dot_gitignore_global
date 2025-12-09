@@ -16,3 +16,6 @@ CLAUDE.local.md
 # Ignore macOS Finder cruft
 .DS_Store
 ._*
+
+# Ignore IDE config
+.vscode/

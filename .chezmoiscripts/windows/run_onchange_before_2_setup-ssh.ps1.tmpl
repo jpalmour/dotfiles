@@ -5,6 +5,7 @@ function Ensure-WindowsOpenSSH {
   if (Test-Path $sshPath) {
     Write-Host '[INFO] Windows OpenSSH Client already installed.'
     return
+    
   }
 
   Write-Host '[INFO] Installing Windows OpenSSH Client capability...'
