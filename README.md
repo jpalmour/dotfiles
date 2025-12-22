@@ -26,9 +26,9 @@ CHEZMOI_INCLUDE_SSH=1 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalm
 ## Applying Changes
 
 ```bash
-# Quick apply (skips .ssh/ generation)
+# Quick apply (alias for `chezmoi apply`; skips .ssh/ generation)
 ca
 
-# Full apply (includes .ssh/ generation from 1Password)
+# Full apply (alias for `CHEZMOI_INCLUDE_SSH=1 chezmoi apply`)
 ca-all
 ```

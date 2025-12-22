@@ -6,7 +6,8 @@ This is a chezmoi-managed dotfiles repository. Chezmoi is a tool for managing co
 This repository supports **three operating systems** (Linux, macOS, and Windows) and aims to:
 - Be DRY (Don't Repeat Yourself) wherever possible
 - Provide a consistent experience across all OSes
-- Use `.chezmoiignore` to ensure appropriate resources are created on each OS
+- Use templates/conditionals to ensure appropriate resources are created on each OS
+- Include all practical, non-sensitive setup logic and scripts needed to configure machines
 
 ## Key Concepts
 
@@ -24,10 +25,15 @@ This repository supports **three operating systems** (Linux, macOS, and Windows)
 - `create_` prefix: Creates file if it doesn't exist
 
 ### Multi-OS Support
-- **.chezmoiignore**: Controls which files are applied on which OS
-- Uses Go template syntax to conditionally ignore files based on OS, architecture, or other factors
-- Example: Files specific to macOS can be ignored on Linux/Windows
-- Enables DRY principles by sharing common configs while supporting OS-specific needs
+- `.chezmoiignore.tmpl` controls which files are applied per OS and setup context
+- Uses Go template syntax to conditionally ignore files based on OS/architecture/flags
+
+### Package Installation
+- Package lists live in `.chezmoi.toml.tmpl` (brew/apt/snap/winget)
+
+### Automation Scripts
+- OS-specific setup scripts live in `.chezmoiscripts/`
+- Script ordering uses filename prefixes (e.g., `run_onchange_before_1_*`)
 
 ## Essential Commands for Development
 
@@ -55,6 +61,11 @@ Template files (`.tmpl` extension) can use Go template syntax:
 - Access variables with `{{ .variable }}`
 - Common variables include `{{ .chezmoi.hostname }}`, `{{ .chezmoi.os }}`, `{{ .chezmoi.arch }}`
 - View all available data with `chezmoi data`
+
+## External Resources
+
+`.chezmoiexternal.toml.tmpl` downloads external dependencies (e.g., oh-my-zsh, powerlevel10k).
+This can require network access for `chezmoi diff/apply`.
 
 ## Best Practices for AI Assistants
 
