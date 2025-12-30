@@ -18,6 +18,26 @@ set -eufo pipefail
 sudo apt-get update
 sudo apt-get install -y {{ $packages | join " " }}
 
+# Set zsh as the default shell if not already
+if [ "$(getent passwd "$USER" | awk -F: '{print $7}')" != "$(command -v zsh)" ]; then
+  echo " Setting default shell to zsh..."
+  sudo chsh -s "$(command -v zsh)" "$USER" || true
+fi
+
+{{- if not .is_wsl }}
+# Configure SSH server
+if command -v systemctl >/dev/null 2>&1; then
+  echo " Configuring SSH server..."
+  sudo systemctl enable ssh >/dev/null 2>&1 || true
+  sudo systemctl start ssh >/dev/null 2>&1 || true
+
+  # Configure firewall if ufw is installed
+  if command -v ufw >/dev/null 2>&1; then
+    sudo ufw allow ssh >/dev/null 2>&1 || true
+  fi
+fi
+{{- end }}
+
 if command -v snap >/dev/null 2>&1; then
 {{ range $snaps -}}
   ( snap info {{ . }} | grep -q ^installed: ) || sudo snap install {{ . }}
@@ -62,6 +82,9 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
 
 sudo systemctl enable docker >/dev/null 2>&1 || true
 sudo systemctl start docker >/dev/null 2>&1 || true
+
+# Add user to docker group for non-root docker access
+sudo usermod -aG docker "$USER" || true
 {{- else }}
 echo " Skipping Docker Engine installation under WSL; use Docker Desktop integration."
 {{- end }}

@@ -21,6 +21,16 @@ cask "{{ . }}"
 {{ end }}
 EOBREW
 
+# Set zsh as the default shell if not already
+if [ "$SHELL" != "$(command -v zsh)" ]; then
+  echo " Setting default shell to zsh..."
+  chsh -s "$(command -v zsh)" || true
+fi
+
+# Enable SSH server (Remote Login)
+echo " Enabling SSH server (Remote Login)..."
+sudo systemsetup -setremotelogin on 2>/dev/null || true
+
 echo "Installing/upgrading Claude Code via native installer..."
 if ! curl -fsSL https://claude.ai/install.sh | bash; then
   echo "Warning: Claude Code installer failed." >&2
