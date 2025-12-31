@@ -12,7 +12,7 @@
 [interpreters]
   [interpreters.ps1]
     command = "pwsh"
-    args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-File"]
+    args = ["-NoLogo", "-NoProfile", "-File"]
 {{ if eq .chezmoi.os "windows" }}
 [cd]
     command = "pwsh"
@@ -84,8 +84,8 @@
     "slack",
   ]
   windows_winget_packages = [
-    "1PasswordCLI",
     "AgileBits.1Password",
+    "AgileBits.1Password.CLI",
     "BurntSushi.ripgrep.MSVC",
     "CoreyButler.NVMforWindows",
     "Docker.DockerDesktop",
