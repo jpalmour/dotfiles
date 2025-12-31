@@ -85,6 +85,25 @@ sudo systemctl start docker >/dev/null 2>&1 || true
 
 # Add user to docker group for non-root docker access
 sudo usermod -aG docker "$USER" || true
+echo " Installing Google Chrome..."
+if ! command -v google-chrome >/dev/null 2>&1; then
+  TMP_CHROME_KEY=$(mktemp)
+  curl -fsSL https://dl.google.com/linux/linux_signing_key.pub -o "$TMP_CHROME_KEY"
+  sudo gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg "$TMP_CHROME_KEY" 2>/dev/null || true
+  rm -f "$TMP_CHROME_KEY"
+
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+  sudo apt-get update
+  sudo apt-get install -y google-chrome-stable
+else
+  echo " Google Chrome already installed, skipping."
+fi
+
 {{- else }}
 echo " Skipping Docker Engine installation under WSL; use Docker Desktop integration."
 {{- end }}
+
+echo "Installing/upgrading Claude Code via native installer..."
+if ! curl -fsSL https://claude.ai/install.sh | bash; then
+  echo "Warning: Claude Code installer failed." >&2
+fi
