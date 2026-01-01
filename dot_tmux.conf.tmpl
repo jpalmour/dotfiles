@@ -11,4 +11,8 @@ bind -n WheelDownPane if-shell -F "#{mouse_any_flag}" "send-keys -M" "send-keys 
 
 # Vi-style selection in copy-mode.
 bind -T copy-mode-vi v send -X begin-selection
-bind -T copy-mode-vi y send -X copy-selection-and-cancel
+{{- if eq .chezmoi.os "darwin" }}
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
+{{- else if eq .chezmoi.os "linux" }}
+bind -T copy-mode-vi y send -X copy-pipe-and-cancel "wl-copy"
+{{- end }}

@@ -73,3 +73,7 @@ alias ca-all='CHEZMOI_INCLUDE_SSH=1 chezmoi apply'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# Kubernetes: use user kubeconfig when present
+if [[ -f "$HOME/.kube/config" ]]; then
+  export KUBECONFIG="$HOME/.kube/config"
+fi
