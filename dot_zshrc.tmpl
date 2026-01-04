@@ -1,3 +1,6 @@
+# Ensure locale is set (prevents errors when SSH'ing from mobile terminals like Termius)
+export LANG="${LANG:-en_US.UTF-8}"
+
 {{- if eq .chezmoi.os "linux" }}
 # SSH agent for non-GNOME desktops (XFCE keyring doesn't support signing)
 if [[ "$XDG_CURRENT_DESKTOP" != *"GNOME"* ]] && command -v keychain >/dev/null 2>&1; then

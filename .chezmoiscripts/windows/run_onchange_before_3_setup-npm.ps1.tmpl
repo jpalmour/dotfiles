@@ -38,7 +38,11 @@ if ($currentVersion -ne $nodeVersion) {
   Write-Host ("[INFO] Node.js {0} already active; skipping nvm use." -f $nodeVersion)
 }
 
+Write-Host ("[INFO] Node.js version: {0}" -f (node --version))
+Write-Host ("[INFO] npm version: {0}" -f (npm --version))
+
 {{- if not .is_work_machine }}
+Write-Host "[INFO] Installing npm global packages..."
 $npmGlobalTools = @(
 {{- range .non_work_npm_global_tools }}
   "{{ . }}"
@@ -48,4 +52,8 @@ foreach ($tool in $npmGlobalTools) {
   Write-Host ("[INFO] Installing global npm package '{0}'..." -f $tool)
   npm install -g $tool
 }
+{{- else }}
+Write-Host "[INFO] Skipping npm global package installation on work machine."
 {{- end }}
+
+Write-Host "[INFO] Node.js setup complete."
