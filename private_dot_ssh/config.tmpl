@@ -30,3 +30,7 @@ Host github-personal.com
 {{ else }}
 {{ onepasswordRead "op://Private/ssh-hosts/hosts" }}
 {{ end }}
+
+Host *
+  IdentityFile ~/.ssh/{{- if .is_work_machine -}}id_ed25519_work{{- else -}}id_ed25519_dev{{- end }}
+  IdentitiesOnly yes
