@@ -1,6 +1,8 @@
 Host *
   ServerAliveInterval 60
   ServerAliveCountMax 2
+  IdentityFile ~/.ssh/{{- if .is_work_machine -}}id_ed25519_work{{- else -}}id_ed25519_dev{{- end }}
+  IdentitiesOnly yes
   # Override TERM for compatibility with remote hosts that lack custom terminfo
   # (e.g., xterm-ghostty). xterm-256color is universally available.
   SetEnv TERM=xterm-256color
