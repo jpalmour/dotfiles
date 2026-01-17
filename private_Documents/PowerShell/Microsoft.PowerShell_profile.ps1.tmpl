@@ -74,6 +74,6 @@ if ($env:WORK_ALIASES_PATH -and (Test-Path $env:WORK_ALIASES_PATH)) {
 # Chezmoi aliases
 function ca { chezmoi apply }
 function ca-all {
-    $env:CHEZMOI_INCLUDE_SSH = "1"
+    $env:CHEZMOI_FETCH_1PASS = "1"
     chezmoi apply
 }

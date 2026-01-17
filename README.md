@@ -9,7 +9,7 @@ Install chezmoi and apply dotfiles in one command:
 ### Linux/MacOS (bash)
 
 ```bash
-CHEZMOI_INCLUDE_SSH=1 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
+CHEZMOI_FETCH_1PASS=1 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalmour
 ```
 
 ### Windows (pwsh)
@@ -20,15 +20,15 @@ CHEZMOI_INCLUDE_SSH=1 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply jpalm
    ```
 2. In a new `pwsh` session, apply this repo:
    ```pwsh
-   $env:CHEZMOI_INCLUDE_SSH=1; chezmoi init --apply jpalmour
+   $env:CHEZMOI_FETCH_1PASS=1; chezmoi init --apply jpalmour
    ```
 
 ## Applying Changes
 
 ```bash
-# Quick apply (alias for `chezmoi apply`; skips .ssh/ generation)
+# Quick apply (alias for `chezmoi apply`; skips 1Password-backed files)
 ca
 
-# Full apply (alias for `CHEZMOI_INCLUDE_SSH=1 chezmoi apply`)
+# Full apply (alias for `CHEZMOI_FETCH_1PASS=1 chezmoi apply`)
 ca-all
 ```
