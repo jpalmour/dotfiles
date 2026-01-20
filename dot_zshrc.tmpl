@@ -1,5 +1,8 @@
 # Ensure locale is set (prevents errors when SSH'ing from mobile terminals like Termius)
-export LANG="${LANG:-en_US.UTF-8}"
+# Termius and other SSH clients may forward LC_* variables for locales not installed on the remote
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+unset LC_CTYPE LC_COLLATE LC_MESSAGES LC_MONETARY LC_NUMERIC LC_TIME 2>/dev/null
 
 {{- if eq .chezmoi.os "linux" }}
 # SSH agent for non-GNOME desktops (XFCE keyring doesn't support signing)
