@@ -131,3 +131,62 @@ if ($claudeCommand) {
         Write-Host ("[ERROR] Failed to run Claude Code installer: $($_.Exception.Message)") -ForegroundColor Red
     }
 }
+
+# Add vim to PATH if installed via winget
+function Add-ToPathIfNeeded {
+    param([string]$Dir)
+
+    # Add to current session
+    if ($env:PATH -notlike "*$Dir*") {
+        $env:PATH = "$Dir;$env:PATH"
+    }
+
+    # Add to user PATH persistently via registry
+    try {
+        $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+        if ($userPath -notlike "*$Dir*") {
+            $newPath = "$Dir;$userPath"
+            [Environment]::SetEnvironmentVariable('PATH', $newPath, 'User')
+            Write-Host ("[INFO] Added '{0}' to User PATH persistently." -f $Dir)
+        }
+    } catch {
+        Write-Host ("[WARN] Could not persist '{0}' to User PATH: {1}" -f $Dir, $_.Exception.Message) -ForegroundColor Yellow
+    }
+}
+
+function Ensure-VimInPath {
+    # Check if vim is already in PATH
+    $vimCmd = Get-Command vim -ErrorAction SilentlyContinue
+    if ($vimCmd) {
+        Write-Host ("[INFO] vim already in PATH at {0}" -f $vimCmd.Source)
+        return
+    }
+
+    # Find vim installation directory
+    $vimBasePath = Join-Path $env:ProgramFiles 'vim'
+    if (-not (Test-Path $vimBasePath)) {
+        Write-Host "[INFO] vim not installed in standard location; skipping PATH setup."
+        return
+    }
+
+    # Find the versioned vim directory (e.g., vim91, vim92, etc.)
+    $vimVersionDir = Get-ChildItem -Path $vimBasePath -Directory -Filter 'vim*' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^vim\d+$' } |
+        Sort-Object Name -Descending |
+        Select-Object -First 1
+
+    if (-not $vimVersionDir) {
+        Write-Host "[WARN] Could not find vim version directory in $vimBasePath" -ForegroundColor Yellow
+        return
+    }
+
+    $vimExePath = Join-Path $vimVersionDir.FullName 'vim.exe'
+    if (Test-Path $vimExePath) {
+        Add-ToPathIfNeeded -Dir $vimVersionDir.FullName
+        Write-Host ("[INFO] Added vim (version {0}) to PATH." -f $vimVersionDir.Name)
+    } else {
+        Write-Host ("[WARN] vim.exe not found at expected location: {0}" -f $vimExePath) -ForegroundColor Yellow
+    }
+}
+
+Ensure-VimInPath
