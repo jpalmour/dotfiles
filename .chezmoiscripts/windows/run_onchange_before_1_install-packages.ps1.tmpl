@@ -116,7 +116,7 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
 
     Write-Host "[INFO] Installing $pkg..."
 
-    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent --source winget
 }
 
 $claudeCommand = Get-Command -Name 'claude' -ErrorAction SilentlyContinue
