@@ -24,6 +24,7 @@
 # Use Microsoft OpenSSH for consistent SSH behavior on Windows
 [core]
     sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
+    longpaths = true
 {{- end }}
 
 {{- if .is_wsl }}

@@ -189,4 +189,61 @@ function Ensure-VimInPath {
     }
 }
 
+function Ensure-GoInPath {
+    # Check if go is already in PATH
+    $goCmd = Get-Command go -ErrorAction SilentlyContinue
+    if ($goCmd) {
+        Write-Host ("[INFO] go already in PATH at {0}" -f $goCmd.Source)
+        return
+    }
+
+    # Find Go installation directory
+    $goPath = Join-Path $env:ProgramFiles 'Go\bin'
+    if (-not (Test-Path $goPath)) {
+        Write-Host "[INFO] Go not installed in standard location; skipping PATH setup."
+        return
+    }
+
+    $goExePath = Join-Path $goPath 'go.exe'
+    if (Test-Path $goExePath) {
+        Add-ToPathIfNeeded -Dir $goPath
+        Write-Host "[INFO] Added Go to PATH."
+    } else {
+        Write-Host ("[WARN] go.exe not found at expected location: {0}" -f $goExePath) -ForegroundColor Yellow
+    }
+}
+
+function Ensure-MakeInPath {
+    # Check if make is already in PATH
+    $makeCmd = Get-Command make -ErrorAction SilentlyContinue
+    if ($makeCmd) {
+        Write-Host ("[INFO] make already in PATH at {0}" -f $makeCmd.Source)
+        return
+    }
+
+    # Find GnuWin32 Make installation directory
+    # Check both Program Files locations
+    $makePaths = @(
+        (Join-Path ${env:ProgramFiles(x86)} 'GnuWin32\bin'),
+        (Join-Path $env:ProgramFiles 'GnuWin32\bin')
+    )
+
+    foreach ($makePath in $makePaths) {
+        if (-not (Test-Path $makePath)) {
+            continue
+        }
+
+        $makeExePath = Join-Path $makePath 'make.exe'
+        if (Test-Path $makeExePath) {
+            Add-ToPathIfNeeded -Dir $makePath
+            Write-Host "[INFO] Added Make to PATH."
+            return
+        }
+    }
+
+    Write-Host "[INFO] Make not installed in standard location; skipping PATH setup."
+}
+
 Ensure-VimInPath
+Ensure-GoInPath
+Ensure-MakeInPath
