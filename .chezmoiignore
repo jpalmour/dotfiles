@@ -1,0 +1,9 @@
+# Ignore the PowerShell script on Linux and macOS
+{{ if or (eq .chezmoi.os "linux") (eq .chezmoi.os "darwin") -}}
+bin/executable_run_once_install_vscode_extensions.ps1
+{{ end -}}
+
+# Ignore the shell script on Windows
+{{ if eq .chezmoi.os "windows" -}}
+bin/executable_run_once_install_vscode_extensions.sh
+{{ end -}}
