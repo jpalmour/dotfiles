@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Installing macOS low-disk alert automation..."
+
+BIN_DIR="${HOME}/bin"
+LAUNCH_AGENTS_DIR="${HOME}/Library/LaunchAgents"
+LOG_DIR="${HOME}/Library/Logs"
+SCRIPT_PATH="${BIN_DIR}/low-disk-alert.zsh"
+PLIST_PATH="${LAUNCH_AGENTS_DIR}/com.jpalmour.low-disk-alert.plist"
+UID_NUM="$(id -u)"
+
+mkdir -p "${BIN_DIR}" "${LAUNCH_AGENTS_DIR}" "${LOG_DIR}"
+
+cat > "${SCRIPT_PATH}" <<'EOF'
+#!/bin/zsh
+set -euo pipefail
+
+DATA_MOUNT="/System/Volumes/Data"
+MIN_FREE_GB="${MIN_FREE_GB:-40}"
+COOLDOWN_HOURS="${COOLDOWN_HOURS:-12}"
+
+STATE_DIR="$HOME/.local/state/low-disk-alert"
+LOG_DIR="$HOME/Library/Logs"
+STATE_FILE="$STATE_DIR/last_notified_epoch"
+mkdir -p "$STATE_DIR" "$LOG_DIR"
+
+LOG_FILE="$LOG_DIR/low-disk-alert.log"
+exec >>"$LOG_FILE" 2>&1
+
+now_epoch=$(date +%s)
+free_kb=$(df -k "$DATA_MOUNT" | awk 'NR==2 {print $4}')
+free_gb=$(( free_kb / 1024 / 1024 ))
+threshold_kb=$(( MIN_FREE_GB * 1024 * 1024 ))
+cooldown_secs=$(( COOLDOWN_HOURS * 3600 ))
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] free=${free_gb}GB threshold=${MIN_FREE_GB}GB"
+
+if (( free_kb >= threshold_kb )); then
+  rm -f "$STATE_FILE"
+  exit 0
+fi
+
+last_epoch=0
+if [[ -f "$STATE_FILE" ]]; then
+  last_epoch=$(cat "$STATE_FILE" 2>/dev/null || echo 0)
+fi
+
+if (( now_epoch - last_epoch < cooldown_secs )); then
+  exit 0
+fi
+
+printf '%s\n' "$now_epoch" > "$STATE_FILE"
+
+osascript <<OSA >/dev/null 2>&1 || true
+display notification "Only ${free_gb} GB free on ${DATA_MOUNT}. Consider Docker prune / cache cleanup." with title "Low Disk Space"
+OSA
+EOF
+
+chmod +x "${SCRIPT_PATH}"
+
+cat > "${PLIST_PATH}" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jpalmour.low-disk-alert</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/josephpalmour/bin/low-disk-alert.zsh</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StartInterval</key>
+  <integer>3600</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/josephpalmour/Library/Logs/launchd-low-disk-alert.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/josephpalmour/Library/Logs/launchd-low-disk-alert.err.log</string>
+</dict>
+</plist>
+EOF
+
+# Keep paths aligned if the home directory is not /Users/josephpalmour.
+/usr/bin/sed -i '' "s|/Users/josephpalmour|${HOME}|g" "${PLIST_PATH}"
+
+if command -v plutil >/dev/null 2>&1; then
+  plutil -lint "${PLIST_PATH}" >/dev/null
+fi
+
+# Loading the agent can fail in non-GUI/SSH sessions; do not fail chezmoi apply for that.
+launchctl bootout "gui/${UID_NUM}" "${PLIST_PATH}" >/dev/null 2>&1 || true
+launchctl bootstrap "gui/${UID_NUM}" "${PLIST_PATH}" >/dev/null 2>&1 || true
+launchctl enable "gui/${UID_NUM}/com.jpalmour.low-disk-alert" >/dev/null 2>&1 || true
+launchctl kickstart -k "gui/${UID_NUM}/com.jpalmour.low-disk-alert" >/dev/null 2>&1 || true
+
+echo "macOS low-disk alert installed (threshold 40GB, hourly check)."
+
