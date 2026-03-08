@@ -116,7 +116,7 @@ foreach ($pkg in ($packages | Sort-Object -Unique)) {
 
     Write-Host "[INFO] Installing $pkg..."
 
-    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent
+    winget install -e --id $pkg --accept-source-agreements --accept-package-agreements --silent --source winget
 }
 
 $claudeCommand = Get-Command -Name 'claude' -ErrorAction SilentlyContinue
@@ -131,3 +131,119 @@ if ($claudeCommand) {
         Write-Host ("[ERROR] Failed to run Claude Code installer: $($_.Exception.Message)") -ForegroundColor Red
     }
 }
+
+# Add vim to PATH if installed via winget
+function Add-ToPathIfNeeded {
+    param([string]$Dir)
+
+    # Add to current session
+    if ($env:PATH -notlike "*$Dir*") {
+        $env:PATH = "$Dir;$env:PATH"
+    }
+
+    # Add to user PATH persistently via registry
+    try {
+        $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+        if ($userPath -notlike "*$Dir*") {
+            $newPath = "$Dir;$userPath"
+            [Environment]::SetEnvironmentVariable('PATH', $newPath, 'User')
+            Write-Host ("[INFO] Added '{0}' to User PATH persistently." -f $Dir)
+        }
+    } catch {
+        Write-Host ("[WARN] Could not persist '{0}' to User PATH: {1}" -f $Dir, $_.Exception.Message) -ForegroundColor Yellow
+    }
+}
+
+function Ensure-VimInPath {
+    # Check if vim is already in PATH
+    $vimCmd = Get-Command vim -ErrorAction SilentlyContinue
+    if ($vimCmd) {
+        Write-Host ("[INFO] vim already in PATH at {0}" -f $vimCmd.Source)
+        return
+    }
+
+    # Find vim installation directory
+    $vimBasePath = Join-Path $env:ProgramFiles 'vim'
+    if (-not (Test-Path $vimBasePath)) {
+        Write-Host "[INFO] vim not installed in standard location; skipping PATH setup."
+        return
+    }
+
+    # Find the versioned vim directory (e.g., vim91, vim92, etc.)
+    $vimVersionDir = Get-ChildItem -Path $vimBasePath -Directory -Filter 'vim*' -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^vim\d+$' } |
+        Sort-Object Name -Descending |
+        Select-Object -First 1
+
+    if (-not $vimVersionDir) {
+        Write-Host "[WARN] Could not find vim version directory in $vimBasePath" -ForegroundColor Yellow
+        return
+    }
+
+    $vimExePath = Join-Path $vimVersionDir.FullName 'vim.exe'
+    if (Test-Path $vimExePath) {
+        Add-ToPathIfNeeded -Dir $vimVersionDir.FullName
+        Write-Host ("[INFO] Added vim (version {0}) to PATH." -f $vimVersionDir.Name)
+    } else {
+        Write-Host ("[WARN] vim.exe not found at expected location: {0}" -f $vimExePath) -ForegroundColor Yellow
+    }
+}
+
+function Ensure-GoInPath {
+    # Check if go is already in PATH
+    $goCmd = Get-Command go -ErrorAction SilentlyContinue
+    if ($goCmd) {
+        Write-Host ("[INFO] go already in PATH at {0}" -f $goCmd.Source)
+        return
+    }
+
+    # Find Go installation directory
+    $goPath = Join-Path $env:ProgramFiles 'Go\bin'
+    if (-not (Test-Path $goPath)) {
+        Write-Host "[INFO] Go not installed in standard location; skipping PATH setup."
+        return
+    }
+
+    $goExePath = Join-Path $goPath 'go.exe'
+    if (Test-Path $goExePath) {
+        Add-ToPathIfNeeded -Dir $goPath
+        Write-Host "[INFO] Added Go to PATH."
+    } else {
+        Write-Host ("[WARN] go.exe not found at expected location: {0}" -f $goExePath) -ForegroundColor Yellow
+    }
+}
+
+function Ensure-MakeInPath {
+    # Check if make is already in PATH
+    $makeCmd = Get-Command make -ErrorAction SilentlyContinue
+    if ($makeCmd) {
+        Write-Host ("[INFO] make already in PATH at {0}" -f $makeCmd.Source)
+        return
+    }
+
+    # Find GnuWin32 Make installation directory
+    # Check both Program Files locations
+    $makePaths = @(
+        (Join-Path ${env:ProgramFiles(x86)} 'GnuWin32\bin'),
+        (Join-Path $env:ProgramFiles 'GnuWin32\bin')
+    )
+
+    foreach ($makePath in $makePaths) {
+        if (-not (Test-Path $makePath)) {
+            continue
+        }
+
+        $makeExePath = Join-Path $makePath 'make.exe'
+        if (Test-Path $makeExePath) {
+            Add-ToPathIfNeeded -Dir $makePath
+            Write-Host "[INFO] Added Make to PATH."
+            return
+        }
+    }
+
+    Write-Host "[INFO] Make not installed in standard location; skipping PATH setup."
+}
+
+Ensure-VimInPath
+Ensure-GoInPath
+Ensure-MakeInPath

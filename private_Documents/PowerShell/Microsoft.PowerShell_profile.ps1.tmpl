@@ -20,6 +20,19 @@ if (Test-Path $globalVenv) {
     }
 }
 
+# --- CLAUDE CODE COMPATIBILITY FIX ---
+# Ensure python3.exe exists in the global venv so Claude's bash tools can find it.
+if (Test-Path $globalVenv) {
+    $pyExe  = Join-Path $globalVenv "python.exe"
+    $py3Exe = Join-Path $globalVenv "python3.exe"
+
+    # If python exists but python3 doesn't, create the copy
+    if ((Test-Path $pyExe) -and (-not (Test-Path $py3Exe))) {
+        Write-Verbose "Creating python3.exe shim for Claude Code compatibility..."
+        Copy-Item -Path $pyExe -Destination $py3Exe -ErrorAction SilentlyContinue
+    }
+}
+
 # Load essential modules if present. Missing modules are non-fatal; install script handles setup.
 foreach ($moduleName in @('PSReadLine', 'posh-git', 'Terminal-Icons')) {
     try {
