@@ -37,3 +37,11 @@
 [user]
     name = Joseph Palmour
     email = {{ if and .is_work_machine (ne .work_email ``) -}}{{ .work_email }}{{- else -}}{{ .personal_email }}{{- end }}
+
+{{- if .is_work_machine }}
+{{-   if stat (joinPath .chezmoi.homeDir ".gitconfig-work-includes") }}
+
+[include]
+    path = ~/.gitconfig-work-includes
+{{-   end }}
+{{- end }}
